@@ -172,6 +172,17 @@ async def _handshake(device, phone_id, vas_vehicle_id, vehicle_key, private_key)
 
     try:
         async with BleakClient(device, timeout=CONNECT_TIMEOUT) as client:
+            # Dump the GATT layout (used to build the in-browser Web Bluetooth tool).
+            try:
+                print("  --- BLE GATT map (share this output) ---")
+                for svc in client.services:
+                    print(f"  service {svc.uuid}")
+                    for ch in svc.characteristics:
+                        print(f"    char {ch.uuid}  props={','.join(ch.properties)}")
+                print("  --- end GATT map ---")
+            except Exception:  # pylint: disable=broad-except
+                pass
+
             await client.start_notify(PHONE_ID_VEHICLE_ID_UUID, on_vid)
             await client.start_notify(PHONE_NONCE_VEHICLE_NONCE_UUID, on_nonce)
             await client.write_gatt_char(
