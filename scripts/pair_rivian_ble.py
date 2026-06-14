@@ -9,12 +9,15 @@ from an unpaired key, so lock/climate/etc. silently do nothing even though the
 cloud accepts them. This script performs the local BLE pairing handshake that
 flips the key to paired, exactly like tapping "Set Up" for a key in the app.
 
+This only works on Gen1 vehicles (Gen2 BLE pairing isn't reverse-engineered).
+
 REQUIREMENTS
 ------------
-- Run this on a computer with Bluetooth that is INSIDE / right next to the truck.
-- The truck must be advertising for setup: in the Rivian app open
-  Settings -> Digital Keys (or Drivers & Keys), find the "Homebridge" key and
-  tap "Set Up" / "Pair" so the vehicle broadcasts "Rivian Phone Key".
+- Run this on a device with GOOD Bluetooth that is INSIDE / right next to the
+  truck. A laptop in the truck works best; the Raspberry Pi's built-in radio is
+  usually too weak. An ESP32 BT proxy also works well.
+- The truck must be advertising for setup: on the truck touchscreen open
+  Settings -> Drivers & Keys, find the "Homebridge" key and tap "Set Up".
 - Python deps:  pip install bleak cryptography
   (On Linux/Raspberry Pi also:  pip install dbus-fast)
 - The rivian-auth.json written by the plugin must be readable here. On the Pi
@@ -23,7 +26,7 @@ REQUIREMENTS
 USAGE
 -----
   python pair_rivian_ble.py --auth /var/lib/homebridge/rivian-auth.json
-  python pair_rivian_ble.py --auth rivian-auth.json --vehicle <VIN>
+  python pair_rivian_ble.py --auth rivian-auth.json --vehicle <VIN> --attempts 8
 """
 from __future__ import annotations
 
@@ -34,7 +37,6 @@ import hmac
 import json
 import platform
 import secrets
-import sys
 import urllib.request
 import uuid
 from pathlib import Path
@@ -115,9 +117,88 @@ def fetch_vas_vehicle_id(user_session_token: str, vehicle_id: str) -> str | None
     return None
 
 
-async def pair(store: dict, vehicle: dict) -> bool:
-    from bleak import BleakClient, BleakScanner
+async def _set_pairable() -> None:
+    try:
+        from dbus_fast import BusType  # type: ignore
+        from dbus_fast.aio import MessageBus  # type: ignore
 
+        path = "/org/bluez/hci0"
+        bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+        intro = await bus.introspect("org.bluez", path)
+        obj = bus.get_proxy_object("org.bluez", path, intro)
+        iface = obj.get_interface("org.bluez.Adapter1")
+        if not await iface.get_pairable():
+            await iface.set_pairable(True)
+        bus.disconnect()
+    except Exception as ex:  # pylint: disable=broad-except
+        print(f"(warning: could not set adapter pairable: {ex})")
+
+
+async def _scan_for_vehicle(timeout: float):
+    """Return (device, rssi) for the advertising 'Rivian Phone Key', or (None, None)."""
+    from bleak import BleakScanner
+
+    found: dict = {}
+
+    def cb(d, adv) -> None:
+        name = adv.local_name or d.name or ""
+        if name == DEVICE_LOCAL_NAME and "d" not in found:
+            found["d"] = d
+            found["rssi"] = adv.rssi
+
+    scanner = BleakScanner(detection_callback=cb)
+    await scanner.start()
+    waited = 0.0
+    while waited < timeout and "d" not in found:
+        await asyncio.sleep(0.5)
+        waited += 0.5
+    await scanner.stop()
+    return found.get("d"), found.get("rssi")
+
+
+async def _handshake(device, phone_id, vas_vehicle_id, vehicle_key, private_key) -> bool:
+    from bleak import BleakClient
+
+    vid_event = asyncio.Event()
+    vid: dict = {}
+    nonce_event = asyncio.Event()
+
+    def on_vid(_, data: bytearray) -> None:
+        vid["v"] = bytes(data)
+        vid_event.set()
+
+    def on_nonce(_, __: bytearray) -> None:
+        nonce_event.set()
+
+    try:
+        async with BleakClient(device, timeout=CONNECT_TIMEOUT) as client:
+            await client.start_notify(PHONE_ID_VEHICLE_ID_UUID, on_vid)
+            await client.start_notify(PHONE_NONCE_VEHICLE_NONCE_UUID, on_nonce)
+            await client.write_gatt_char(
+                PHONE_ID_VEHICLE_ID_UUID, bytes.fromhex(phone_id.replace("-", ""))
+            )
+            await asyncio.wait_for(vid_event.wait(), NOTIFY_TIMEOUT)
+            got = vid["v"].hex()
+            if got != vas_vehicle_id.replace("-", ""):
+                print(f"  vehicle id mismatch (got {got}, expected {vas_vehicle_id})")
+                return False
+
+            phone_nonce = secrets.token_bytes(16)
+            mac = ble_hmac(phone_nonce, private_key, vehicle_key)
+            await client.write_gatt_char(PHONE_NONCE_VEHICLE_NONCE_UUID, phone_nonce + mac)
+            await asyncio.wait_for(nonce_event.wait(), NOTIFY_TIMEOUT)
+
+            if platform.system() == "Darwin":
+                await client.start_notify(ACTIVE_ENTRY_UUID, lambda _, __: None)
+            else:
+                await client.pair()
+            return True
+    except Exception as ex:  # pylint: disable=broad-except
+        print(f"  pairing error: {ex}")
+        return False
+
+
+async def pair(store: dict, vehicle: dict, attempts: int) -> bool:
     phone_id = store["vasPhoneId"]
     vas_vehicle_id = vehicle.get("vasVehicleId")
     vehicle_key = vehicle["vehiclePublicKey"]
@@ -130,76 +211,31 @@ async def pair(store: dict, vehicle: dict) -> bool:
             print("ERROR: could not determine vasVehicleId for this vehicle.")
             return False
 
-    print(f'Scanning for "{DEVICE_LOCAL_NAME}" (make sure the truck is in Set Up mode)...')
-    device = await BleakScanner().find_device_by_name(DEVICE_LOCAL_NAME, timeout=30.0)
-    if not device:
-        print('ERROR: vehicle not found over Bluetooth. Be next to the truck and select')
-        print('       "Set Up" for the Homebridge key in the Rivian app, then retry.')
-        return False
-    print(f"Found {device}. Connecting...")
-
-    # On Linux, make the adapter pairable for bonding.
     if platform.system() == "Linux":
-        try:
-            from dbus_fast import BusType  # type: ignore
-            from dbus_fast.aio import MessageBus  # type: ignore
+        await _set_pairable()
 
-            path = "/org/bluez/hci0"
-            bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
-            intro = await bus.introspect("org.bluez", path)
-            obj = bus.get_proxy_object("org.bluez", path, intro)
-            iface = obj.get_interface("org.bluez.Adapter1")
-            if not await iface.get_pairable():
-                await iface.set_pairable(True)
-            bus.disconnect()
-        except Exception as ex:  # pylint: disable=broad-except
-            print(f"(warning: could not set adapter pairable: {ex})")
-
-    vehicle_id_event = asyncio.Event()
-    vehicle_id_data: dict[str, bytes] = {}
-    nonce_event = asyncio.Event()
-
-    def on_vehicle_id(_, data: bytearray) -> None:
-        vehicle_id_data["v"] = bytes(data)
-        vehicle_id_event.set()
-
-    def on_nonce(_, __: bytearray) -> None:
-        nonce_event.set()
-
-    try:
-        async with BleakClient(device, timeout=CONNECT_TIMEOUT) as client:
-            print("Connected. Validating vehicle id...")
-            await client.start_notify(PHONE_ID_VEHICLE_ID_UUID, on_vehicle_id)
-            await client.start_notify(PHONE_NONCE_VEHICLE_NONCE_UUID, on_nonce)
-
-            await client.write_gatt_char(
-                PHONE_ID_VEHICLE_ID_UUID, bytes.fromhex(phone_id.replace("-", ""))
-            )
-            await asyncio.wait_for(vehicle_id_event.wait(), NOTIFY_TIMEOUT)
-
-            got = vehicle_id_data["v"].hex()
-            if got != vas_vehicle_id.replace("-", ""):
-                print(f"ERROR: vehicle id mismatch (got {got}, expected {vas_vehicle_id}).")
-                return False
-
-            print("Exchanging nonce (signing with the enrolled key)...")
-            phone_nonce = secrets.token_bytes(16)
-            mac = ble_hmac(phone_nonce, private_key, vehicle_key)
-            await client.write_gatt_char(PHONE_NONCE_VEHICLE_NONCE_UUID, phone_nonce + mac)
-            await asyncio.wait_for(nonce_event.wait(), NOTIFY_TIMEOUT)
-
-            print("Authenticated. Bonding...")
-            if platform.system() == "Darwin":
-                await client.start_notify(ACTIVE_ENTRY_UUID, lambda _, __: None)
-            else:
-                await client.pair()
-
-            print("\nSUCCESS: the Homebridge key is now paired. Commands should work.")
+    name = store.get("deviceName", "Homebridge")
+    for i in range(1, attempts + 1):
+        print(f"\n[Attempt {i}/{attempts}] On the truck screen, tap 'Set Up' for the '{name}'")
+        print("key NOW (re-tap each attempt). Scanning ~25s for the vehicle...")
+        device, rssi = await _scan_for_vehicle(25.0)
+        if not device:
+            print("  ...vehicle not heard. Be closer / inside the truck and keep it in Set Up mode.")
+            continue
+        print(f"  Found vehicle (signal {rssi} dBm). Attempting handshake...")
+        if rssi is not None and rssi <= -90:
+            print("  WARNING: very weak signal (<= -90 dBm). Move the device into the truck.")
+        if await _handshake(device, phone_id, vas_vehicle_id, vehicle_key, private_key):
+            print("\nSUCCESS: the key is now paired. Commands should start working within a minute.")
             return True
-    except Exception as ex:  # pylint: disable=broad-except
-        print(f"ERROR during pairing: {ex}")
-        print('Make sure you are in the truck and selected "Set Up" for the Homebridge key.')
-        return False
+        print("  Handshake failed; will retry (tap Set Up again if the truck timed out).")
+        await asyncio.sleep(2)
+
+    print("\nCould not pair after several attempts. Tips:")
+    print("  - Sit INSIDE the truck with the Bluetooth device.")
+    print("  - Tap 'Set Up' on the truck right as each attempt starts scanning.")
+    print("  - The Raspberry Pi radio is often too weak; try a laptop or ESP32 BT proxy.")
+    return False
 
 
 def main() -> int:
@@ -210,6 +246,7 @@ def main() -> int:
         help="Path to rivian-auth.json (default: Homebridge storage path)",
     )
     parser.add_argument("--vehicle", help="VIN or vehicle id to pair (default: first enrolled)")
+    parser.add_argument("--attempts", type=int, default=8, help="Pairing attempts (default 8)")
     args = parser.parse_args()
 
     try:
@@ -235,8 +272,8 @@ def main() -> int:
             return 1
         vehicle = match[0]
 
-    print(f"Pairing key '{store.get('deviceName')}' with vehicle {vehicle.get('name')} ({vehicle.get('vin')}).")
-    ok = asyncio.run(pair(store, vehicle))
+    print(f"Pairing key '{store.get('deviceName')}' with {vehicle.get('name')} ({vehicle.get('vin')}).")
+    ok = asyncio.run(pair(store, vehicle, args.attempts))
     return 0 if ok else 1
 
 
