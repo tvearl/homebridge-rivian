@@ -20,6 +20,7 @@ class RivianUiServer extends HomebridgePluginUiServer {
     this.onRequest('/verify-otp', this.handleVerifyOtp.bind(this));
     this.onRequest('/enroll', this.handleEnroll.bind(this));
     this.onRequest('/disenroll', this.handleDisenroll.bind(this));
+    this.onRequest('/pairing-data', this.handlePairingData.bind(this));
 
     this.ready();
   }
@@ -131,6 +132,62 @@ class RivianUiServer extends HomebridgePluginUiServer {
   async loadVehicles(client) {
     const info = await client.getUserInfo(true);
     return info.vehicles.map((v) => ({ id: v.id, name: v.name, vin: v.vin, model: v.model }));
+  }
+
+  // Hosted Web Bluetooth pairing page (GitHub Pages serving /docs).
+  get pairingToolUrl() {
+    return 'https://tvearl.github.io/homebridge-rivian/pair.html';
+  }
+
+  // Build the per-vehicle data the browser pairing tool needs. Looks up
+  // vasVehicleId live if it wasn't captured at enrollment time.
+  async handlePairingData() {
+    const store = loadStore(this.homebridgeStoragePath);
+    if (!store) {
+      throw new RequestError('Not enrolled yet. Complete sign in & enroll first.', { status: 400 });
+    }
+
+    let info = null;
+    try {
+      const client = new RivianClient(store.tokens);
+      await client.createCsrfToken();
+      info = await client.getUserInfo(true);
+    } catch (err) {
+      // Network optional if vasVehicleId is already stored.
+    }
+
+    const toB64url = (obj) =>
+      Buffer.from(JSON.stringify(obj))
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+    const vehicles = Object.values(store.vehicles).map((v) => {
+      let vasVehicleId = v.vasVehicleId;
+      if (!vasVehicleId && info) {
+        const match = info.vehicles.find((x) => x.id === v.id);
+        vasVehicleId = match && match.vasVehicleId;
+      }
+      const blob = toB64url({
+        privateKeyHex: store.privateKeyHex,
+        publicKeyHex: store.publicKeyHex,
+        vasPhoneId: store.vasPhoneId,
+        deviceName: store.deviceName,
+        vehicles: {
+          [v.id]: { name: v.name, vehiclePublicKey: v.vehiclePublicKey, vasVehicleId },
+        },
+      });
+      return {
+        name: v.name,
+        vin: v.vin,
+        ready: Boolean(vasVehicleId),
+        blob,
+        url: `${this.pairingToolUrl}#d=${blob}`,
+      };
+    });
+
+    return { hostedUrl: this.pairingToolUrl, vehicles };
   }
 }
 

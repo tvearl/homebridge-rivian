@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rivian Homebridge - Pair Phone Key</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 16px; line-height: 1.45; }
+    .wrap { max-width: 560px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; margin: 0 0 4px; }
+    p.sub { opacity: .75; margin: 0 0 16px; }
+    textarea { width: 100%; box-sizing: border-box; min-height: 90px; border-radius: 8px; border: 1px solid rgba(128,128,128,.4); background: transparent; color: inherit; padding: 10px; font-family: ui-monospace, monospace; font-size: .85rem; }
+    .btn { display: inline-block; width: 100%; box-sizing: border-box; padding: 13px 16px; border: none; border-radius: 10px; background: #1e6fff; color: #fff; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 14px; }
+    .btn:disabled { opacity: .5; }
+    .card { border: 1px solid rgba(128,128,128,.3); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+    #log { white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: .82rem; background: rgba(128,128,128,.08); border-radius: 8px; padding: 12px; margin-top: 14px; min-height: 60px; }
+    .ok { color: #2a9d3f; } .err { color: #d33; } .warn { color: #c80; }
+    .veh { font-weight: 600; }
+    ol { padding-left: 20px; } li { margin: 4px 0; }
+    .unsupported { background: rgba(211,51,51,.12); border: 1px solid #d33; border-radius: 8px; padding: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Pair your Rivian phone key</h1>
+    <p class="sub">Finishes setup so Homebridge can control your vehicle. Do this <strong>inside or right next to your vehicle</strong>.</p>
+
+    <div id="support" class="unsupported" style="display:none;">
+      <strong>This browser can't use Bluetooth.</strong>
+      <div id="support-msg"></div>
+    </div>
+
+    <div class="card">
+      <ol>
+        <li>Paste the pairing data from the Homebridge plugin's setup wizard below (or open the link it generated).</li>
+        <li>On your vehicle's touchscreen: <strong>Drivers &amp; Keys → your Homebridge key → Set Up</strong>.</li>
+        <li>Tap <strong>Pair</strong> below within a few seconds. Retry if it times out.</li>
+      </ol>
+      <textarea id="data" placeholder="Paste pairing data here"></textarea>
+      <div id="vehinfo" class="sub" style="margin-top:8px;"></div>
+      <button id="pairBtn" class="btn" disabled>Pair</button>
+    </div>
+
+    <div id="log">Ready.</div>
+  </div>
+
+  <script>
+    // --- BLE GATT layout (same for all Gen1 Rivians; confirm via nRF Connect) ---
+    const GATT = {
+      // Services declared so the browser is allowed to access them.
+      serviceUuids: [
+        '52495356-454e-534f-5253-455256494345', // Active Entry (documented)
+      ],
+      phoneIdVehicleId: 'aa49565a-4d4f-424b-4559-5f5752495445',
+      phoneNonce: 'e020a15d-e730-4b2c-908b-51daf9d41e19',
+      activeEntry: '5249565f-4d4f-424b-4559-5f5752495445',
+    };
+    const DEVICE_NAME = 'Rivian Phone Key';
+    const NOTIFY_TIMEOUT = 8000;
+
+    const $ = (id) => document.getElementById(id);
+    const log = (msg, cls) => {
+      const el = $('log');
+      const line = document.createElement('div');
+      if (cls) line.className = cls;
+      line.textContent = msg;
+      el.appendChild(line);
+      el.scrollTop = el.scrollHeight;
+    };
+
+    // ---------- helpers ----------
+    const hexToBytes = (h) => {
+      h = h.replace(/[^0-9a-fA-F]/g, '');
+      const a = new Uint8Array(h.length / 2);
+      for (let i = 0; i < a.length; i++) a[i] = parseInt(h.substr(i * 2, 2), 16);
+      return a;
+    };
+    const bytesToHex = (b) => Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
+    const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    async function importPrivateKey(privHex, ourPubHex) {
+      const d = privHex.padStart(64, '0');
+      const pub = ourPubHex.replace(/^04/, '');
+      const x = pub.slice(0, 64);
+      const y = pub.slice(64, 128);
+      const jwk = { kty: 'EC', crv: 'P-256', d: b64url(hexToBytes(d)), x: b64url(hexToBytes(x)), y: b64url(hexToBytes(y)), ext: true };
+      return crypto.subtle.importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
+    }
+    async function importPeer(vehPubHex) {
+      return crypto.subtle.importKey('raw', hexToBytes(vehPubHex), { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+    }
+    async function bleHmac(phoneNonce, data) {
+      const priv = await importPrivateKey(data.privateKeyHex, data.publicKeyHex);
+      const peer = await importPeer(data.vehiclePublicKey);
+      const shared = await crypto.subtle.deriveBits({ name: 'ECDH', public: peer }, priv, 256);
+      const hkdfKey = await crypto.subtle.importKey('raw', shared, { name: 'HKDF' }, false, ['deriveBits']);
+      const secret = await crypto.subtle.deriveBits(
+        { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: new Uint8Array(0) }, hkdfKey, 256,
+      );
+      const mac = await crypto.subtle.importKey('raw', secret, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+      const sig = await crypto.subtle.sign('HMAC', mac, phoneNonce);
+      return new Uint8Array(sig);
+    }
+
+    function waitNotify(characteristic) {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('timed out waiting for vehicle')), NOTIFY_TIMEOUT);
+        const handler = (e) => {
+          clearTimeout(timer);
+          characteristic.removeEventListener('characteristicvaluechanged', handler);
+          resolve(new Uint8Array(e.target.value.buffer));
+        };
+        characteristic.addEventListener('characteristicvaluechanged', handler);
+      });
+    }
+
+    // ---------- data loading ----------
+    let pairingData = null;
+    function tryParse(text) {
+      try {
+        const obj = JSON.parse(text);
+        const v = obj.vehicles ? Object.values(obj.vehicles)[0] : obj;
+        const data = {
+          privateKeyHex: obj.privateKeyHex || obj.private_key,
+          publicKeyHex: obj.publicKeyHex || obj.public_key,
+          vasPhoneId: obj.vasPhoneId,
+          vehiclePublicKey: v.vehiclePublicKey,
+          vasVehicleId: v.vasVehicleId,
+          deviceName: obj.deviceName || 'Homebridge',
+          vehicleName: v.name || 'your Rivian',
+        };
+        if (!data.privateKeyHex || !data.vehiclePublicKey || !data.vasPhoneId || !data.vasVehicleId) return null;
+        return data;
+      } catch (e) { return null; }
+    }
+    function loadData(text) {
+      const data = tryParse(text);
+      pairingData = data;
+      $('pairBtn').disabled = !data;
+      $('vehinfo').innerHTML = data
+        ? `Ready to pair key "<span class="veh">${data.deviceName}</span>" with <span class="veh">${data.vehicleName}</span>.`
+        : '';
+      if (!data && text.trim()) log('Could not read pairing data (need privateKeyHex, vehiclePublicKey, vasPhoneId, vasVehicleId).', 'err');
+    }
+    $('data').addEventListener('input', (e) => loadData(e.target.value));
+
+    // Accept data via URL fragment (#d=base64json) for QR / link handoff.
+    (function fromHash() {
+      const m = location.hash.match(/[#&]d=([^&]+)/);
+      if (!m) return;
+      try {
+        let b = m[1].replace(/-/g, '+').replace(/_/g, '/');
+        while (b.length % 4) b += '=';
+        const json = decodeURIComponent(escape(atob(b)));
+        $('data').value = json;
+        loadData(json);
+      } catch (e) { /* ignore */ }
+    })();
+
+    // ---------- support check ----------
+    if (!navigator.bluetooth) {
+      $('support').style.display = 'block';
+      const ua = navigator.userAgent;
+      $('support-msg').textContent = /iPhone|iPad|iPod/.test(ua)
+        ? 'On iPhone/iPad, open this page in the free "Bluefy - Web BLE Browser" app (Safari/Chrome do not support Web Bluetooth).'
+        : 'Use Google Chrome or Microsoft Edge (desktop or Android). Safari and Firefox do not support Web Bluetooth.';
+      $('pairBtn').disabled = true;
+    }
+
+    // ---------- pairing ----------
+    async function findChars(gatt) {
+      const services = await gatt.getPrimaryServices();
+      let phoneId, nonce, active;
+      for (const s of services) {
+        log(`  service ${s.uuid}`);
+        let chars = [];
+        try { chars = await s.getCharacteristics(); } catch (e) { continue; }
+        for (const c of chars) {
+          log(`    char ${c.uuid}`);
+          if (c.uuid === GATT.phoneIdVehicleId) phoneId = c;
+          if (c.uuid === GATT.phoneNonce) nonce = c;
+          if (c.uuid === GATT.activeEntry) active = c;
+        }
+      }
+      return { phoneId, nonce, active };
+    }
+
+    $('pairBtn').addEventListener('click', async () => {
+      if (!pairingData) return;
+      $('pairBtn').disabled = true;
+      try {
+        log('Requesting Bluetooth device...');
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: DEVICE_NAME }],
+          optionalServices: GATT.serviceUuids,
+        });
+        log(`Connecting to ${device.name}...`);
+        const gatt = await device.gatt.connect();
+
+        log('Discovering services/characteristics...');
+        const { phoneId, nonce, active } = await findChars(gatt);
+        if (!phoneId || !nonce) {
+          log('Could not find the pairing characteristics in the allowed service(s).', 'err');
+          log('Send the service/char list above to the developer to update the GATT config.', 'warn');
+          $('pairBtn').disabled = false;
+          return;
+        }
+
+        log('Validating vehicle id...');
+        await phoneId.startNotifications();
+        const idPromise = waitNotify(phoneId);
+        await phoneId.writeValue(hexToBytes(pairingData.vasPhoneId.replace(/-/g, '')));
+        const vid = await idPromise;
+        if (bytesToHex(vid) !== pairingData.vasVehicleId.replace(/-/g, '').toLowerCase()) {
+          log(`Vehicle id mismatch (got ${bytesToHex(vid)}).`, 'err');
+          $('pairBtn').disabled = false;
+          return;
+        }
+
+        log('Exchanging nonce (signing with your key)...');
+        await nonce.startNotifications();
+        const noncePromise = waitNotify(nonce);
+        const phoneNonce = crypto.getRandomValues(new Uint8Array(16));
+        const mac = await bleHmac(phoneNonce, pairingData);
+        const payload = new Uint8Array(phoneNonce.length + mac.length);
+        payload.set(phoneNonce); payload.set(mac, phoneNonce.length);
+        await nonce.writeValue(payload);
+        await noncePromise;
+
+        log('Authenticated. Finalizing...');
+        if (active) {
+          try { await active.startNotifications(); } catch (e) { /* triggers bonding on some platforms */ }
+        }
+        log('SUCCESS - your key is paired. Vehicle control should work within a minute.', 'ok');
+      } catch (err) {
+        log('Pairing failed: ' + (err && err.message ? err.message : err), 'err');
+        log('Make sure you tapped "Set Up" on the vehicle screen, then try again.', 'warn');
+        $('pairBtn').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

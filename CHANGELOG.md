@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.0.6
+
+- Add a phone-based Bluetooth pairing flow built into the setup wizard: a
+  "Show pairing steps" panel hands your per-vehicle pairing data to a hosted
+  HTTPS Web Bluetooth page you open on your phone (Bluefy on iOS, Chrome on
+  Android) and tap Pair - no laptop, Raspberry Pi Bluetooth, or Python needed.
+- Add the hosted pairing page (docs/pair.html) and a `/pairing-data` UI server
+  endpoint (looks up vasVehicleId live if not stored).
+- Improve the standalone pairing script's diagnostics (BLE GATT map dump).
+
 ## 1.0.5
 
 - Cabin climate is now a Thermostat tile: shows current cabin temperature and

@@ -36,7 +36,13 @@
       <h2>Rivian connected <span class="ok">&#10003;</span></h2>
       <p class="sub">Enrolled key: <span id="connDevice"></span></p>
       <ul class="vlist" id="connVehicles"></ul>
-      <button class="btn secondary" id="reenrollBtn">Re-run setup</button>
+
+      <h2 style="font-size:1.05rem; margin-top:18px;">Enable vehicle control</h2>
+      <p class="note">Commands (lock, climate, windows, etc.) need a one-time <strong>Bluetooth pairing</strong> with your vehicle, done from your <strong>phone's browser</strong>. Reading status works without it.</p>
+      <button class="btn secondary" id="pairStepsBtn">Show pairing steps</button>
+      <div id="pairSteps" class="hidden"></div>
+
+      <button class="btn secondary" id="reenrollBtn" style="margin-top:18px;">Re-run setup</button>
       <button class="btn danger" id="disconnectBtn">Disconnect &amp; remove key</button>
       <p class="note">Disconnecting removes the phone key from your Rivian account (freeing the slot) and deletes the saved session on this machine.</p>
     </div>
@@ -166,6 +172,52 @@
           homebridge.hideSpinner();
         }
       });
+
+      $('pairStepsBtn').addEventListener('click', async () => {
+        homebridge.showSpinner();
+        try {
+          const res = await homebridge.request('/pairing-data');
+          renderPairSteps(res);
+        } catch (e) {
+          homebridge.toast.error(e.message || 'Could not build pairing data.');
+        } finally {
+          homebridge.hideSpinner();
+        }
+      });
+
+      function renderPairSteps(res) {
+        const box = $('pairSteps');
+        box.classList.remove('hidden');
+        let html = '<ol style="font-size:.9rem;">'
+          + '<li><strong>iPhone:</strong> install the free <strong>Bluefy</strong> app (App Store). <strong>Android:</strong> use <strong>Chrome</strong>.</li>'
+          + '<li>Open this page on your phone: <code>' + res.hostedUrl + '</code></li>'
+          + '<li>Copy your pairing data (button below) and paste it into that page.</li>'
+          + '<li>Sit in the vehicle, on its screen tap <strong>Drivers &amp; Keys → your key → Set Up</strong>, then tap <strong>Pair</strong> in the page.</li>'
+          + '</ol>';
+        res.vehicles.forEach((v, i) => {
+          const id = 'blob' + i;
+          html += '<div class="veh" style="display:block; margin-top:8px;">'
+            + '<strong>' + v.name + '</strong> (' + v.vin + ')'
+            + (v.ready ? '' : ' <span style="color:#c80;">- vehicle id unavailable, check connection</span>')
+            + '<br><button class="btn secondary" data-blob="' + id + '" style="margin-top:6px;">Copy pairing data</button>'
+            + '<textarea id="' + id + '" style="position:absolute; left:-9999px;">' + v.blob + '</textarea>'
+            + '</div>';
+        });
+        html += '<p class="note">The pairing data contains your vehicle key - treat it like a password and only paste it into the official pairing page.</p>';
+        box.innerHTML = html;
+        box.querySelectorAll('button[data-blob]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const ta = $(btn.getAttribute('data-blob'));
+            try {
+              await navigator.clipboard.writeText(ta.value);
+              homebridge.toast.success('Pairing data copied. Paste it into the pairing page on your phone.');
+            } catch (e) {
+              ta.style.position = 'static'; ta.style.left = '0'; ta.select();
+              homebridge.toast.message('Select all and copy the highlighted text.');
+            }
+          });
+        });
+      }
 
       $('reenrollBtn').addEventListener('click', () => show('step-login'));
 
