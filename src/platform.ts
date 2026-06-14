@@ -139,7 +139,7 @@ export class RivianHomebridgePlatform implements DynamicPlatformPlugin {
       .setCharacteristic(this.Characteristic.Model, vehicle.model || 'Rivian')
       .setCharacteristic(this.Characteristic.Name, vehicle.name)
       .setCharacteristic(this.Characteristic.SerialNumber, vehicle.vin)
-      .setCharacteristic(this.Characteristic.FirmwareRevision, vehicle.modelYear || '1.0.0');
+      .setCharacteristic(this.Characteristic.FirmwareRevision, String(vehicle.modelYear || '1.0.0'));
 
     const handlers: RivianAccessory[] = [];
     if (this.isEnabled('enableLock')) {

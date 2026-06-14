@@ -3,6 +3,10 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.0.2
+
+- Fix a HomeKit warning by sending `FirmwareRevision` (model year) as a string.
+
 ## 1.0.1
 
 - Fix accessory naming so each control shows a proper name in the Home app
