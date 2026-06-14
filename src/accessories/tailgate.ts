@@ -3,6 +3,7 @@ import type { RivianHomebridgePlatform, RivianAccessory } from '../platform';
 import type { StoredVehicle } from '../persist';
 import { Command, VehicleStateValues } from '../commands';
 import { isOpen } from '../state';
+import { nameService } from './util';
 
 /**
  * Tailgate (R1T) / liftgate (R1S) as a Switch (On = open / drop).
@@ -20,6 +21,7 @@ export class TailgateAccessory implements RivianAccessory {
     this.service =
       accessory.getServiceById(Service.Switch, 'rivian-tailgate') ||
       accessory.addService(Service.Switch, `${vehicle.name} Tailgate`, 'rivian-tailgate');
+    nameService(this.platform, this.service, `${vehicle.name} Tailgate`);
 
     this.service.getCharacteristic(Characteristic.On).onSet(this.setOn.bind(this));
   }

@@ -3,6 +3,7 @@ import type { RivianHomebridgePlatform, RivianAccessory } from '../platform';
 import type { StoredVehicle } from '../persist';
 import { Command, VehicleStateValues } from '../commands';
 import { isOpen } from '../state';
+import { nameService } from './util';
 
 /**
  * Powered tonneau cover (R1T with the powered tonneau accessory) as a Switch
@@ -20,6 +21,7 @@ export class TonneauAccessory implements RivianAccessory {
     this.service =
       accessory.getServiceById(Service.Switch, 'rivian-tonneau') ||
       accessory.addService(Service.Switch, `${vehicle.name} Tonneau`, 'rivian-tonneau');
+    nameService(this.platform, this.service, `${vehicle.name} Tonneau`);
 
     this.service.getCharacteristic(Characteristic.On).onSet(this.setOn.bind(this));
   }

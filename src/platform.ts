@@ -176,20 +176,37 @@ export class RivianHomebridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
+  private async pollVehicle(vehicle: StoredVehicle): Promise<void> {
+    if (!this.client) {
+      return;
+    }
+    try {
+      const raw = await this.client.getVehicleState(vehicle.id, STATE_PROPERTIES);
+      const values = flattenState(raw);
+      for (const handler of this.handlers.get(vehicle.id) ?? []) {
+        handler.update(values);
+      }
+    } catch (err) {
+      this.handleApiError(err, `polling ${vehicle.name}`);
+    }
+  }
+
   private async pollAll(): Promise<void> {
-    if (!this.client || !this.store) {
+    if (!this.store) {
       return;
     }
     for (const vehicle of Object.values(this.store.vehicles)) {
-      try {
-        const raw = await this.client.getVehicleState(vehicle.id, STATE_PROPERTIES);
-        const values = flattenState(raw);
-        for (const handler of this.handlers.get(vehicle.id) ?? []) {
-          handler.update(values);
-        }
-      } catch (err) {
-        this.handleApiError(err, `polling ${vehicle.name}`);
-      }
+      await this.pollVehicle(vehicle);
+    }
+  }
+
+  /** Refresh a single vehicle's state a few times after a command so the
+   * switches reflect reality quickly instead of waiting for the next poll. */
+  private scheduleRefresh(vehicle: StoredVehicle, delaysMs: number[] = [9000, 25000]): void {
+    for (const ms of delaysMs) {
+      setTimeout(() => {
+        this.pollVehicle(vehicle).catch(() => undefined);
+      }, ms);
     }
   }
 
@@ -218,6 +235,8 @@ export class RivianHomebridgePlatform implements DynamicPlatformPlugin {
         throw err2;
       }
     }
+    // Command accepted - pull fresh state shortly so HomeKit reflects reality.
+    this.scheduleRefresh(vehicle);
   }
 
   private async dispatch(

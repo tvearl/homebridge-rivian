@@ -3,6 +3,7 @@ import type { RivianHomebridgePlatform, RivianAccessory } from '../platform';
 import type { StoredVehicle } from '../persist';
 import { Command, VehicleStateValues } from '../commands';
 import { isOpen } from '../state';
+import { nameService } from './util';
 
 const WINDOW_PROPS = [
   'windowFrontLeftClosed',
@@ -27,6 +28,7 @@ export class WindowsAccessory implements RivianAccessory {
     this.service =
       accessory.getServiceById(Service.Switch, 'rivian-windows') ||
       accessory.addService(Service.Switch, `${vehicle.name} Windows`, 'rivian-windows');
+    nameService(this.platform, this.service, `${vehicle.name} Windows`);
 
     this.service.getCharacteristic(Characteristic.On).onSet(this.setOn.bind(this));
   }

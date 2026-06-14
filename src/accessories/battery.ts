@@ -3,6 +3,7 @@ import type { RivianHomebridgePlatform, RivianAccessory } from '../platform';
 import type { StoredVehicle } from '../persist';
 import { VehicleStateValues } from '../commands';
 import { isCharging, toNumber } from '../state';
+import { nameService } from './util';
 
 const LOW_BATTERY_THRESHOLD = 20;
 
@@ -34,6 +35,10 @@ export class BatteryAccessory implements RivianAccessory {
     this.charging =
       accessory.getServiceById(Service.ContactSensor, 'rivian-charging') ||
       accessory.addService(Service.ContactSensor, `${vehicle.name} Charging`, 'rivian-charging');
+
+    nameService(this.platform, this.humidity, `${vehicle.name} Battery`);
+    nameService(this.platform, this.battery, `${vehicle.name} Battery Level`);
+    nameService(this.platform, this.charging, `${vehicle.name} Charging`);
   }
 
   update(values: VehicleStateValues): void {

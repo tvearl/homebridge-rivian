@@ -3,6 +3,7 @@ import type { RivianHomebridgePlatform, RivianAccessory } from '../platform';
 import type { StoredVehicle } from '../persist';
 import { Command, VehicleStateValues } from '../commands';
 import { isLocked } from '../state';
+import { nameService } from './util';
 
 const DOOR_LOCK_PROPS = [
   'doorFrontLeftLocked',
@@ -23,6 +24,7 @@ export class LockAccessory implements RivianAccessory {
     this.service =
       accessory.getServiceById(Service.LockMechanism, 'rivian-lock') ||
       accessory.addService(Service.LockMechanism, `${vehicle.name} Lock`, 'rivian-lock');
+    nameService(this.platform, this.service, `${vehicle.name} Lock`);
 
     this.service.getCharacteristic(Characteristic.LockTargetState).onSet(this.setTarget.bind(this));
   }

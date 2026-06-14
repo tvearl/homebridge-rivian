@@ -64,12 +64,22 @@ export function isPreconditioning(value: unknown): boolean | undefined {
   return false;
 }
 
-const CHARGING_VALUES = new Set(['charging', 'charging_active', 'active', 'charging_ac', 'charging_dc']);
-
+/**
+ * Determine whether the vehicle is actively charging.
+ *
+ * Rivian's `chargerStatus` is the reliable signal: it reads
+ * `chrgr_sts_connected_charging` while charging, vs `chrgr_sts_not_connected`
+ * or `chrgr_sts_connected_no_chrg` otherwise. `chargerState` is NOT reliable
+ * for this because it uses values like `charging_ready` (plugged-in-ready, not
+ * actually charging), so a naive substring match would false-positive.
+ */
 export function isCharging(chargerStatus: unknown, chargerState: unknown): boolean {
-  const a = chargerStatus !== undefined && chargerStatus !== null ? String(chargerStatus).toLowerCase() : '';
-  const b = chargerState !== undefined && chargerState !== null ? String(chargerState).toLowerCase() : '';
-  return CHARGING_VALUES.has(a) || CHARGING_VALUES.has(b) || a.includes('charging') || b.includes('charging');
+  const status = chargerStatus !== undefined && chargerStatus !== null ? String(chargerStatus).toLowerCase() : '';
+  const state = chargerState !== undefined && chargerState !== null ? String(chargerState).toLowerCase() : '';
+  if (status) {
+    return status.includes('charging');
+  }
+  return ['charging_active', 'charging_active_ac', 'charging_active_dc'].includes(state);
 }
 
 export function toNumber(value: unknown): number | undefined {

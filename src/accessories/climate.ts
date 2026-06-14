@@ -3,6 +3,7 @@ import type { RivianHomebridgePlatform, RivianAccessory } from '../platform';
 import type { StoredVehicle } from '../persist';
 import { Command, VehicleStateValues } from '../commands';
 import { isPreconditioning } from '../state';
+import { nameService } from './util';
 
 /**
  * Cabin preconditioning as a simple Switch. State is best-effort: Rivian's
@@ -21,6 +22,7 @@ export class ClimateAccessory implements RivianAccessory {
     this.service =
       accessory.getServiceById(Service.Switch, 'rivian-climate') ||
       accessory.addService(Service.Switch, `${vehicle.name} Preconditioning`, 'rivian-climate');
+    nameService(this.platform, this.service, `${vehicle.name} Preconditioning`);
 
     this.service.getCharacteristic(Characteristic.On).onSet(this.setOn.bind(this));
   }

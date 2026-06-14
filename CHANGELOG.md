@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.0.1
+
+- Fix accessory naming so each control shows a proper name in the Home app
+  (e.g. "Preconditioning", "Windows", "Frunk") instead of "Switch 1/2/3", by
+  setting the `ConfiguredName` characteristic on every service.
+- Fix charging detection: `charging_ready` (plugged in, not charging) is no
+  longer reported as actively charging.
+- Refresh a vehicle's state shortly after sending a command so switches
+  reflect the real state quickly instead of waiting for the next poll.
+- Support Node.js 24 in `engines`.
+
 ## 1.0.0
 
 Initial release.
