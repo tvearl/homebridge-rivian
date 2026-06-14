@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.0.4
+
+- Windows are now a Window tile (slider): 100% opens all windows, 0% closes
+  all (values snap, since Rivian's API has no per-window or partial/vent
+  position). Position reflects the reported open/closed state.
+
 ## 1.0.3
 
 - Frunk and tonneau are now exposed as Garage Door tiles (clear Open / Closed

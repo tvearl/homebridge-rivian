@@ -92,7 +92,7 @@ The plugin creates one accessory per vehicle, with these services (each can be t
 | Battery % | Humidity sensor + Battery | Shows state of charge as a percentage. |
 | Charging | Contact sensor | "Open" while the vehicle is charging. |
 | Preconditioning | Switch | Turns cabin climate preconditioning on/off. |
-| Windows | Switch | On = open **all** windows, off = close all. |
+| Windows | Window (slider) | 100% = open all, 0% = close all (snaps; no per-window or vent position via Rivian's API). |
 | Frunk | Garage Door | Open / close with Open/Closed state. |
 | Tailgate / liftgate | Switch | On = open/drop. Close works only where supported; some vehicles do not report tailgate position. |
 | Tonneau | Garage Door | R1T powered tonneau only; Open/Closed state. |

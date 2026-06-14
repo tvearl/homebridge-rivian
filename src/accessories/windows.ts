@@ -13,8 +13,10 @@ const WINDOW_PROPS = [
 ];
 
 /**
- * Open/close all windows as a Switch (On = open). Rivian's cloud API only
- * supports opening/closing all windows together - there is no partial "vent".
+ * All windows as a Window tile (slider). Rivian's cloud API only supports
+ * opening/closing ALL windows together and only reports open/closed (no
+ * per-window control, no partial/vent position), so the slider snaps:
+ * >= 50% opens all windows, < 50% closes all. Position reflects open/closed.
  */
 export class WindowsAccessory implements RivianAccessory {
   private readonly service: Service;
@@ -25,25 +27,49 @@ export class WindowsAccessory implements RivianAccessory {
     private readonly vehicle: StoredVehicle,
   ) {
     const { Service, Characteristic } = this.platform;
-    this.service =
-      accessory.getServiceById(Service.Switch, 'rivian-windows') ||
-      accessory.addService(Service.Switch, `${vehicle.name} Windows`, 'rivian-windows');
-    nameService(this.platform, this.service, `${vehicle.name} Windows`);
 
-    this.service.getCharacteristic(Characteristic.On).onSet(this.setOn.bind(this));
+    // Remove the old Switch-based service from earlier versions, if present.
+    const stale = accessory.getServiceById(Service.Switch, 'rivian-windows');
+    if (stale) {
+      accessory.removeService(stale);
+    }
+
+    this.service =
+      accessory.getServiceById(Service.Window, 'rivian-windows') ||
+      accessory.addService(Service.Window, `${vehicle.name} Windows`, 'rivian-windows');
+    nameService(this.platform, this.service, `${vehicle.name} Windows`);
+    this.service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
+
+    this.service.getCharacteristic(Characteristic.TargetPosition).onSet(this.setTarget.bind(this));
   }
 
-  private async setOn(value: CharacteristicValue): Promise<void> {
-    const open = Boolean(value);
+  private async setTarget(value: CharacteristicValue): Promise<void> {
+    const { Characteristic } = this.platform;
+    const open = Number(value) >= 50;
     await this.platform.sendCommand(this.vehicle, open ? Command.OPEN_WINDOWS : Command.CLOSE_WINDOWS);
+
+    const snapped = open ? 100 : 0;
+    this.service.updateCharacteristic(Characteristic.TargetPosition, snapped);
+    this.service.updateCharacteristic(
+      Characteristic.PositionState,
+      open ? Characteristic.PositionState.INCREASING : Characteristic.PositionState.DECREASING,
+    );
+    // Settle the slider; the state poll will reconcile with reality.
+    setTimeout(() => {
+      this.service.updateCharacteristic(Characteristic.CurrentPosition, snapped);
+      this.service.updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
+    }, 1500);
   }
 
   update(values: VehicleStateValues): void {
+    const { Characteristic } = this.platform;
     const states = WINDOW_PROPS.map((p) => isOpen(values[p])).filter((s) => s !== undefined);
     if (!states.length) {
       return;
     }
-    const anyOpen = states.some((s) => s === true);
-    this.service.updateCharacteristic(this.platform.Characteristic.On, anyOpen);
+    const position = states.some((s) => s === true) ? 100 : 0;
+    this.service.updateCharacteristic(Characteristic.CurrentPosition, position);
+    this.service.updateCharacteristic(Characteristic.TargetPosition, position);
+    this.service.updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
   }
 }
