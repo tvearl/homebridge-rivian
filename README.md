@@ -93,9 +93,9 @@ The plugin creates one accessory per vehicle, with these services (each can be t
 | Charging | Contact sensor | "Open" while the vehicle is charging. |
 | Preconditioning | Switch | Turns cabin climate preconditioning on/off. |
 | Windows | Switch | On = open **all** windows, off = close all. |
-| Frunk | Switch | On = open, off = close. |
-| Tailgate / liftgate | Switch | On = open/drop. Close works only where supported. |
-| Tonneau | Switch | R1T powered tonneau only. |
+| Frunk | Garage Door | Open / close with Open/Closed state. |
+| Tailgate / liftgate | Switch | On = open/drop. Close works only where supported; some vehicles do not report tailgate position. |
+| Tonneau | Garage Door | R1T powered tonneau only; Open/Closed state. |
 
 ### Settings
 

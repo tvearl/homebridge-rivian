@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.0.3
+
+- Frunk and tonneau are now exposed as Garage Door tiles (clear Open / Closed
+  with opening/closing state) instead of plain switches. The old switch
+  services are removed automatically on upgrade.
+
 ## 1.0.2
 
 - Fix a HomeKit warning by sending `FirmwareRevision` (model year) as a string.
