@@ -24,7 +24,7 @@
 <body>
   <div class="wrap">
     <h1>Pair your Rivian phone key</h1>
-    <p class="sub">Finishes setup so Homebridge can control your vehicle. Do this <strong>inside or right next to your vehicle</strong>.</p>
+    <p class="sub">Finishes setup so Homebridge can control your vehicle. Use a <strong>laptop/desktop with Chrome or Edge</strong> (or Android Chrome), <strong>inside or right next to your vehicle</strong>. iPhone/iPad browsers are not supported.</p>
 
     <div id="support" class="unsupported" style="display:none;">
       <strong>This browser can't use Bluetooth.</strong>
@@ -35,11 +35,11 @@
       <ol>
         <li>Paste the pairing data from the Homebridge plugin's setup wizard below (or open the link it generated).</li>
         <li>On your vehicle's touchscreen: <strong>Drivers &amp; Keys → your Homebridge key → Set Up</strong>.</li>
-        <li>Tap <strong>Pair</strong> below within a few seconds. Retry if it times out.</li>
+        <li>Tap <strong>Connect to Bluetooth &amp; pair</strong> below within a few seconds. Retry if it times out.</li>
       </ol>
       <textarea id="data" placeholder="Paste pairing data here"></textarea>
       <div id="vehinfo" class="sub" style="margin-top:8px;"></div>
-      <button id="pairBtn" class="btn" disabled>Pair</button>
+      <button id="pairBtn" class="btn" disabled>Connect to Bluetooth &amp; pair</button>
     </div>
 
     <div id="log">Ready.</div>
@@ -163,7 +163,7 @@
       $('support').style.display = 'block';
       const ua = navigator.userAgent;
       $('support-msg').textContent = /iPhone|iPad|iPod/.test(ua)
-        ? 'On iPhone/iPad, open this page in the free "Bluefy - Web BLE Browser" app (Safari/Chrome do not support Web Bluetooth).'
+        ? 'iPhone/iPad browsers cannot use Bluetooth (Apple does not support Web Bluetooth in iOS). Open this page on a laptop/desktop with Google Chrome or Microsoft Edge, brought near your vehicle. Once paired, control works from your iPhone normally.'
         : 'Use Google Chrome or Microsoft Edge (desktop or Android). Safari and Firefox do not support Web Bluetooth.';
       $('pairBtn').disabled = true;
     }

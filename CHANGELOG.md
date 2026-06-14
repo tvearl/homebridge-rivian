@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.0.7
+
+- Pairing is now documented and presented as a laptop-browser step (Chrome/Edge,
+  or Android Chrome). iPhone/iPad browsers can't do Web Bluetooth, so they can't
+  pair - but control works from iPhone normally once paired.
+- Wizard now offers a direct "Open Bluetooth pairing page" link (data pre-filled)
+  in addition to copy/paste, and clearer device guidance.
+
 ## 1.0.6
 
 - Add a phone-based Bluetooth pairing flow built into the setup wizard: a

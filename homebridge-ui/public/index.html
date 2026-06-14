@@ -38,7 +38,7 @@
       <ul class="vlist" id="connVehicles"></ul>
 
       <h2 style="font-size:1.05rem; margin-top:18px;">Enable vehicle control</h2>
-      <p class="note">Commands (lock, climate, windows, etc.) need a one-time <strong>Bluetooth pairing</strong> with your vehicle, done from your <strong>phone's browser</strong>. Reading status works without it.</p>
+      <p class="note">Commands (lock, climate, windows, etc.) need a one-time <strong>Bluetooth pairing</strong> with your vehicle. Do it once from a <strong>laptop/desktop running Chrome or Edge</strong> (or Android Chrome), brought near the vehicle. <strong>iPhone/iPad browsers can't do Bluetooth</strong>, so they can't pair - but once paired, control works everywhere, including your iPhone. Reading status works without pairing.</p>
       <button class="btn secondary" id="pairStepsBtn">Show pairing steps</button>
       <div id="pairSteps" class="hidden"></div>
 
@@ -189,21 +189,22 @@
         const box = $('pairSteps');
         box.classList.remove('hidden');
         let html = '<ol style="font-size:.9rem;">'
-          + '<li><strong>iPhone:</strong> install the free <strong>Bluefy</strong> app (App Store). <strong>Android:</strong> use <strong>Chrome</strong>.</li>'
-          + '<li>Open this page on your phone: <code>' + res.hostedUrl + '</code></li>'
-          + '<li>Copy your pairing data (button below) and paste it into that page.</li>'
-          + '<li>Sit in the vehicle, on its screen tap <strong>Drivers &amp; Keys → your key → Set Up</strong>, then tap <strong>Pair</strong> in the page.</li>'
+          + '<li>Use a <strong>laptop/desktop with Chrome or Edge</strong> (or Android Chrome) and bring it near the vehicle. <em>iPhone/iPad browsers can\'t do Bluetooth.</em></li>'
+          + '<li>Open this page in the Homebridge UI <strong>on that laptop</strong>, then click <strong>Open Bluetooth pairing page</strong> below (your data is filled in automatically). If you\'re on a different machine, use <strong>Copy pairing data</strong> and paste it into the page on the laptop.</li>'
+          + '<li>On the vehicle screen tap <strong>Drivers &amp; Keys → your key → Set Up</strong>.</li>'
+          + '<li>On the pairing page click <strong>Connect to Bluetooth &amp; pair</strong> and pick <strong>Rivian Phone Key</strong>.</li>'
           + '</ol>';
         res.vehicles.forEach((v, i) => {
           const id = 'blob' + i;
-          html += '<div class="veh" style="display:block; margin-top:8px;">'
+          html += '<div class="veh" style="display:block; margin-top:10px;">'
             + '<strong>' + v.name + '</strong> (' + v.vin + ')'
             + (v.ready ? '' : ' <span style="color:#c80;">- vehicle id unavailable, check connection</span>')
-            + '<br><button class="btn secondary" data-blob="' + id + '" style="margin-top:6px;">Copy pairing data</button>'
+            + '<br><a class="btn" href="' + v.url + '" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; text-align:center;">Open Bluetooth pairing page</a>'
+            + '<button class="btn secondary" data-blob="' + id + '" style="margin-top:6px;">Copy pairing data</button>'
             + '<textarea id="' + id + '" style="position:absolute; left:-9999px;">' + v.blob + '</textarea>'
             + '</div>';
         });
-        html += '<p class="note">The pairing data contains your vehicle key - treat it like a password and only paste it into the official pairing page.</p>';
+        html += '<p class="note">The pairing data contains your vehicle key - treat it like a password and only open it on a device you trust.</p>';
         box.innerHTML = html;
         box.querySelectorAll('button[data-blob]').forEach((btn) => {
           btn.addEventListener('click', async () => {

@@ -27,6 +27,10 @@ Control your **Rivian** (R1T, R1S, R2) from the Apple **Home** app and Siri, thr
 - A working [Homebridge](https://github.com/homebridge/homebridge/wiki) install (the [Homebridge UI](https://github.com/homebridge/homebridge-config-ui-x) is strongly recommended).
 - Your **Rivian account** email and password (the same one you use in the Rivian app).
 - A free **phone-key slot**. Rivian allows **2 phone keys per vehicle**; this plugin uses one of them. If both are in use, remove one in the Rivian app first (Profile -> your vehicle -> Digital Keys), or remove it later from this plugin.
+- **For the one-time key pairing: a laptop/desktop with Bluetooth running Google Chrome or Microsoft Edge** (or Chrome on Android), that you can bring within Bluetooth range of the vehicle.
+  - This is **required** and is a hard browser limitation: pairing uses the [Web Bluetooth API](https://developer.mozilla.org/docs/Web/API/Web_Bluetooth_API), which **does not work in any iPhone/iPad browser** (Apple does not implement it in iOS WebKit). Safari and Firefox are not supported on any platform.
+  - You only need this once. After the key is paired, all control runs through Rivian's cloud and works from any Apple Home / iPhone normally - no laptop or Bluetooth needed again.
+  - **Gen1 vehicles only** (the BLE pairing protocol for Gen2 has not been reverse-engineered).
 
 ---
 
@@ -63,29 +67,45 @@ After installing, you connect your account from the plugin's settings page. **No
 
 The plugin stores a session token and a key that lives only on your Homebridge machine.
 
-### Step 2 - Pair the key over Bluetooth (REQUIRED for commands)
+### Step 2 - Pair the key over Bluetooth from a laptop (REQUIRED for commands)
 
 Enrolling registers the key, but Rivian will not execute commands from it until
 it is **paired with the vehicle over Bluetooth** (the key shows `isPaired: false`
 until then). Until you do this, **reads work but lock / climate / windows / etc.
 silently do nothing** (the cloud accepts the command, but the truck ignores it).
 
-This is a one-time step and must be done **next to the truck**:
+This is a **one-time** step. You need a **laptop/desktop with Bluetooth running
+Chrome or Edge** (Android Chrome also works). **iPhones/iPads cannot do this** -
+no iOS browser supports Web Bluetooth (see Requirements).
 
-1. Get a computer with Bluetooth next to (or inside) the truck. A Raspberry Pi /
-   laptop works. The `rivian-auth.json` file must be readable on that machine
-   (on a Homebridge install it's in your storage path, e.g. `/var/lib/homebridge`).
-2. Install deps: `pip install bleak cryptography` (Linux/Pi also `pip install dbus-fast`).
-3. In the **Rivian app**: Settings -> Drivers & Keys (Digital Keys), find the
-   `Homebridge` key and tap **Set Up / Pair** so the truck starts advertising.
-4. Run the pairing helper:
+1. Bring the laptop within Bluetooth range of the vehicle (sitting in or right
+   next to it is best).
+2. In the Homebridge UI, open the plugin **Settings** and click
+   **Show pairing steps** under "Enable vehicle control".
+3. Click **Open Bluetooth pairing page** for your vehicle. It opens a secure
+   page (`https://<your-fork>.github.io/homebridge-rivian/pair.html`) with your
+   data already loaded. (If you opened the Homebridge UI on a different machine,
+   use **Copy pairing data** and paste it into that page on the laptop instead.)
+4. On the **vehicle touchscreen**: Settings -> Drivers & Keys, select the
+   `Homebridge` key and tap **Set Up**.
+5. On the pairing page click **Connect to Bluetooth & pair**, choose
+   **Rivian Phone Key** in the browser's Bluetooth chooser, and approve.
+
+When it shows `SUCCESS`, the key is paired and commands work. From then on
+everything works from your iPhone / Apple Home over the cloud.
+
+### Advanced / headless alternative (Python)
+
+If you'd rather pair from a command line on a Bluetooth-capable computer next to
+the vehicle (instead of a browser):
 
 ```bash
+pip install bleak cryptography   # Linux also: pip install dbus-fast
 python scripts/pair_rivian_ble.py --auth /var/lib/homebridge/rivian-auth.json
 ```
 
-When it prints `SUCCESS`, the key is paired and commands will work. You only do
-this once.
+Tap **Set Up** for the `Homebridge` key on the vehicle screen when it starts
+scanning. It prints `SUCCESS` when paired.
 
 ### Headless / Docker alternative (CLI)
 
