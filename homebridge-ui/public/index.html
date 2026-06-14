@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rivian Setup</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 16px; }
+    .card { border: 1px solid rgba(128,128,128,.3); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    h2 { margin: 0 0 4px; font-size: 1.25rem; }
+    p.sub { margin: 0 0 16px; opacity: .75; font-size: .9rem; }
+    label { display: block; font-weight: 600; margin: 12px 0 4px; font-size: .85rem; }
+    input[type=text], input[type=email], input[type=password] {
+      width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid rgba(128,128,128,.4); background: transparent; color: inherit; font-size: 1rem;
+    }
+    .btn { display: inline-block; width: 100%; box-sizing: border-box; padding: 11px 16px; border: none;
+      border-radius: 8px; background: #1e6fff; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 16px; }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .btn.secondary { background: transparent; color: #1e6fff; border: 1px solid #1e6fff; }
+    .btn.danger { background: transparent; color: #d33; border: 1px solid #d33; }
+    .veh { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(128,128,128,.2); }
+    .veh:last-child { border-bottom: none; }
+    .note { font-size: .82rem; opacity: .75; margin-top: 12px; line-height: 1.4; }
+    .hidden { display: none; }
+    .ok { color: #2a9d3f; font-weight: 600; }
+    ul.vlist { padding-left: 18px; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Connected state -->
+    <div id="connected" class="card hidden">
+      <h2>Rivian connected <span class="ok">&#10003;</span></h2>
+      <p class="sub">Enrolled key: <span id="connDevice"></span></p>
+      <ul class="vlist" id="connVehicles"></ul>
+      <button class="btn secondary" id="reenrollBtn">Re-run setup</button>
+      <button class="btn danger" id="disconnectBtn">Disconnect &amp; remove key</button>
+      <p class="note">Disconnecting removes the phone key from your Rivian account (freeing the slot) and deletes the saved session on this machine.</p>
+    </div>
+
+    <!-- Step 1: credentials -->
+    <div id="step-login" class="card hidden">
+      <h2>Sign in to Rivian</h2>
+      <p class="sub">Your password is sent only to Rivian and is never stored.</p>
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="username" />
+      <label for="password">Password</label>
+      <input type="password" id="password" autocomplete="current-password" />
+      <button class="btn" id="loginBtn">Continue</button>
+    </div>
+
+    <!-- Step 2: OTP -->
+    <div id="step-otp" class="card hidden">
+      <h2>Enter verification code</h2>
+      <p class="sub">Rivian sent a one-time code to your email or phone.</p>
+      <label for="otp">Verification code</label>
+      <input type="text" id="otp" inputmode="numeric" autocomplete="one-time-code" />
+      <button class="btn" id="otpBtn">Verify</button>
+    </div>
+
+    <!-- Step 3: vehicle selection + enroll -->
+    <div id="step-enroll" class="card hidden">
+      <h2>Choose vehicles</h2>
+      <p class="sub">A phone key will be enrolled for each selected vehicle (uses 1 of your 2 key slots per vehicle).</p>
+      <div id="vehicleList"></div>
+      <label for="deviceName">Key name (shown in the Rivian app)</label>
+      <input type="text" id="deviceName" value="Homebridge" />
+      <button class="btn" id="enrollBtn">Enroll &amp; finish</button>
+    </div>
+  </div>
+
+  <script>
+    (async () => {
+      const $ = (id) => document.getElementById(id);
+      const show = (id) => {
+        ['connected', 'step-login', 'step-otp', 'step-enroll'].forEach((s) => $(s).classList.add('hidden'));
+        $(id).classList.remove('hidden');
+      };
+
+      function renderVehicles(vehicles) {
+        const container = $('vehicleList');
+        container.innerHTML = '';
+        vehicles.forEach((v) => {
+          const row = document.createElement('label');
+          row.className = 'veh';
+          row.style.fontWeight = 'normal';
+          row.innerHTML =
+            '<input type="checkbox" checked value="' + v.id + '" /> ' +
+            '<span><strong>' + v.name + '</strong><br><small>' + (v.model || 'Rivian') + ' &middot; ' + v.vin + '</small></span>';
+          container.appendChild(row);
+        });
+      }
+
+      async function refreshStatus() {
+        const status = await homebridge.request('/status');
+        if (status.enrolled) {
+          $('connDevice').textContent = status.deviceName;
+          $('connVehicles').innerHTML = status.vehicles
+            .map((v) => '<li>' + v.name + ' <small>(' + v.vin + ')</small></li>')
+            .join('');
+          show('connected');
+        } else {
+          show('step-login');
+        }
+      }
+
+      $('loginBtn').addEventListener('click', async () => {
+        const email = $('email').value.trim();
+        const password = $('password').value;
+        if (!email || !password) {
+          homebridge.toast.error('Enter your email and password.');
+          return;
+        }
+        homebridge.showSpinner();
+        try {
+          const res = await homebridge.request('/login', { email, password });
+          if (res.otpRequired) {
+            show('step-otp');
+          } else {
+            renderVehicles(res.vehicles);
+            show('step-enroll');
+          }
+        } catch (e) {
+          homebridge.toast.error(e.message || 'Login failed.');
+        } finally {
+          homebridge.hideSpinner();
+        }
+      });
+
+      $('otpBtn').addEventListener('click', async () => {
+        const code = $('otp').value.trim();
+        if (!code) {
+          homebridge.toast.error('Enter the verification code.');
+          return;
+        }
+        homebridge.showSpinner();
+        try {
+          const res = await homebridge.request('/verify-otp', { code });
+          renderVehicles(res.vehicles);
+          show('step-enroll');
+        } catch (e) {
+          homebridge.toast.error(e.message || 'Verification failed.');
+        } finally {
+          homebridge.hideSpinner();
+        }
+      });
+
+      $('enrollBtn').addEventListener('click', async () => {
+        const vehicleIds = Array.from(document.querySelectorAll('#vehicleList input:checked')).map((i) => i.value);
+        const deviceName = $('deviceName').value.trim() || 'Homebridge';
+        if (!vehicleIds.length) {
+          homebridge.toast.error('Select at least one vehicle.');
+          return;
+        }
+        homebridge.showSpinner();
+        try {
+          await homebridge.request('/enroll', { vehicleIds, deviceName });
+          homebridge.toast.success('Rivian connected. Restart Homebridge to load the accessories.');
+          await refreshStatus();
+        } catch (e) {
+          homebridge.toast.error(e.message || 'Enrollment failed.');
+        } finally {
+          homebridge.hideSpinner();
+        }
+      });
+
+      $('reenrollBtn').addEventListener('click', () => show('step-login'));
+
+      $('disconnectBtn').addEventListener('click', async () => {
+        homebridge.showSpinner();
+        try {
+          await homebridge.request('/disenroll');
+          homebridge.toast.success('Disconnected.');
+          show('step-login');
+        } catch (e) {
+          homebridge.toast.error(e.message || 'Could not disconnect.');
+        } finally {
+          homebridge.hideSpinner();
+        }
+      });
+
+      await refreshStatus();
+    })();
+  </script>
+</body>
+</html>

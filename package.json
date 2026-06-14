@@ -1,0 +1,70 @@
+{
+  "displayName": "Homebridge Rivian",
+  "name": "homebridge-rivian",
+  "version": "1.0.0",
+  "description": "Control your Rivian (R1T / R1S / R2) from Apple Home via Homebridge: lock/unlock, cabin preconditioning, windows, frunk, tailgate, tonneau, and battery/charge status. Unofficial, not affiliated with Rivian.",
+  "license": "MIT",
+  "author": "homebridge-rivian contributors",
+  "homepage": "https://github.com/tvearl/homebridge-rivian#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tvearl/homebridge-rivian.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tvearl/homebridge-rivian/issues"
+  },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/tvearl"
+    }
+  ],
+  "engines": {
+    "node": "^18.20.0 || ^20.18.0 || ^22.10.0",
+    "homebridge": "^1.8.0 || ^2.0.0-beta.0"
+  },
+  "main": "dist/index.js",
+  "bin": {
+    "rivian-homebridge-auth": "dist/auth-cli.js"
+  },
+  "scripts": {
+    "clean": "rimraf ./dist",
+    "build": "rimraf ./dist && tsc",
+    "lint": "eslint src/**/*.ts --max-warnings=0",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run lint && npm run build"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "rivian",
+    "r1t",
+    "r1s",
+    "r2",
+    "ev",
+    "electric-vehicle",
+    "homekit",
+    "siri",
+    "apple-home"
+  ],
+  "dependencies": {
+    "@homebridge/plugin-ui-utils": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^8.57.1",
+    "homebridge": "^1.8.5",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "dist",
+    "config.schema.json",
+    "homebridge-ui",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
+}

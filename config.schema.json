@@ -1,0 +1,93 @@
+{
+  "pluginAlias": "RivianHomebridge",
+  "pluginType": "platform",
+  "singular": true,
+  "customUi": true,
+  "headerDisplay": "Control your Rivian from Apple Home. Use the **Sign in & enroll** panel above to connect your account, then choose which controls to expose below.",
+  "footerDisplay": "Unofficial plugin - not affiliated with Rivian. Enrolling uses one of your two phone-key slots per vehicle.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "Rivian",
+        "required": true
+      },
+      "pollIntervalSeconds": {
+        "title": "Polling interval (seconds)",
+        "type": "integer",
+        "default": 60,
+        "minimum": 30,
+        "maximum": 3600,
+        "description": "How often to refresh vehicle state. Lower values update faster but use more API calls and battery."
+      },
+      "enableLock": {
+        "title": "Lock / unlock (all closures)",
+        "type": "boolean",
+        "default": true
+      },
+      "enableBattery": {
+        "title": "Battery % and charging status",
+        "type": "boolean",
+        "default": true
+      },
+      "enableClimate": {
+        "title": "Cabin preconditioning switch",
+        "type": "boolean",
+        "default": true
+      },
+      "enableWindows": {
+        "title": "Open / close all windows",
+        "type": "boolean",
+        "default": true
+      },
+      "enableFrunk": {
+        "title": "Front trunk (frunk)",
+        "type": "boolean",
+        "default": true
+      },
+      "enableTailgate": {
+        "title": "Tailgate / liftgate",
+        "type": "boolean",
+        "default": false
+      },
+      "enableTonneau": {
+        "title": "Powered tonneau cover (R1T only)",
+        "type": "boolean",
+        "default": false
+      },
+      "debug": {
+        "title": "Verbose debug logging",
+        "type": "boolean",
+        "default": false
+      }
+    }
+  },
+  "layout": [
+    "name",
+    "pollIntervalSeconds",
+    {
+      "type": "fieldset",
+      "title": "Controls to expose",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        "enableLock",
+        "enableBattery",
+        "enableClimate",
+        "enableWindows",
+        "enableFrunk",
+        "enableTailgate",
+        "enableTonneau"
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Advanced",
+      "expandable": true,
+      "expanded": false,
+      "items": ["debug"]
+    }
+  ]
+}

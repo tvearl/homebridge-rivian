@@ -1,0 +1,10 @@
+src/
+node_modules/
+.github/
+docs/
+tsconfig.json
+.eslintrc.json
+.gitignore
+*.tsbuildinfo
+rivian-auth.json
+.env
