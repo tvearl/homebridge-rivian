@@ -20,6 +20,7 @@ import { WindowsAccessory } from './accessories/windows';
 import { FrunkAccessory } from './accessories/frunk';
 import { TailgateAccessory } from './accessories/tailgate';
 import { TonneauAccessory } from './accessories/tonneau';
+import { SeatCoolingAccessory } from './accessories/seatCooling';
 
 export interface RivianAccessory {
   update(values: VehicleStateValues): void;
@@ -35,6 +36,7 @@ export interface RivianPlatformConfig extends PlatformConfig {
   enableFrunk?: boolean;
   enableTailgate?: boolean;
   enableTonneau?: boolean;
+  enableSeatCooling?: boolean;
   debug?: boolean;
 }
 
@@ -162,6 +164,9 @@ export class RivianHomebridgePlatform implements DynamicPlatformPlugin {
     }
     if (this.isEnabled('enableTonneau')) {
       handlers.push(new TonneauAccessory(this, accessory, vehicle));
+    }
+    if (this.config.enableSeatCooling === true) {
+      handlers.push(new SeatCoolingAccessory(this, accessory, vehicle));
     }
 
     this.handlers.set(vehicle.id, handlers);

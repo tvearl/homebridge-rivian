@@ -61,7 +61,31 @@ After installing, you connect your account from the plugin's settings page. **No
    - This registers a digital "phone key" for each selected vehicle. It will appear in the Rivian app under your vehicle's Digital Keys, and **uses one of your two key slots per vehicle**.
 6. **Restart Homebridge** (or the child bridge) when prompted. Your Rivian accessories now appear in the Home app.
 
-That's it. The plugin stores a session token and a key that lives only on your Homebridge machine.
+The plugin stores a session token and a key that lives only on your Homebridge machine.
+
+### Step 2 - Pair the key over Bluetooth (REQUIRED for commands)
+
+Enrolling registers the key, but Rivian will not execute commands from it until
+it is **paired with the vehicle over Bluetooth** (the key shows `isPaired: false`
+until then). Until you do this, **reads work but lock / climate / windows / etc.
+silently do nothing** (the cloud accepts the command, but the truck ignores it).
+
+This is a one-time step and must be done **next to the truck**:
+
+1. Get a computer with Bluetooth next to (or inside) the truck. A Raspberry Pi /
+   laptop works. The `rivian-auth.json` file must be readable on that machine
+   (on a Homebridge install it's in your storage path, e.g. `/var/lib/homebridge`).
+2. Install deps: `pip install bleak cryptography` (Linux/Pi also `pip install dbus-fast`).
+3. In the **Rivian app**: Settings -> Drivers & Keys (Digital Keys), find the
+   `Homebridge` key and tap **Set Up / Pair** so the truck starts advertising.
+4. Run the pairing helper:
+
+```bash
+python scripts/pair_rivian_ble.py --auth /var/lib/homebridge/rivian-auth.json
+```
+
+When it prints `SUCCESS`, the key is paired and commands will work. You only do
+this once.
 
 ### Headless / Docker alternative (CLI)
 
@@ -91,8 +115,9 @@ The plugin creates one accessory per vehicle, with these services (each can be t
 | Lock / unlock | Lock | Locks/unlocks all closures. State reflects your doors. |
 | Battery % | Humidity sensor + Battery | Shows state of charge as a percentage. |
 | Charging | Contact sensor | "Open" while the vehicle is charging. |
-| Preconditioning | Switch | Turns cabin climate preconditioning on/off. |
-| Windows | Window (slider) | 100% = open all, 0% = close all (snaps; no per-window or vent position via Rivian's API). |
+| Cabin climate | Thermostat | Current cabin temp, Off/Heat/Cool/Auto, and a target temp (16-29 C / ~61-84 F). Maps to Rivian preconditioning. |
+| Seat cooling (front) | Switch | Vents both front seats. Off by default; enable in settings. |
+| Windows | Switch | On = open/vent all windows, off = close all (no per-window or partial vent via Rivian's API). |
 | Frunk | Garage Door | Open / close with Open/Closed state. |
 | Tailgate / liftgate | Switch | On = open/drop. Close works only where supported; some vehicles do not report tailgate position. |
 | Tonneau | Garage Door | R1T powered tonneau only; Open/Closed state. |
@@ -129,7 +154,7 @@ These are limits of Rivian's API, not bugs:
 ## Troubleshooting
 
 - **"Not signed in yet" in the logs** - open the plugin settings and complete the Sign in & enroll wizard.
-- **Commands do nothing** - make sure enrollment succeeded (the key shows under Digital Keys in the Rivian app) and that you didn't hit the 2-key limit.
+- **Commands do nothing (reads still work)** - the phone key almost certainly isn't paired yet. Complete "Step 2 - Pair the key over Bluetooth" above. You can confirm in the Rivian app that the `Homebridge` key shows as set up/paired.
 - **"Rivian session expired"** - re-run the sign-in wizard to refresh your session.
 - **Phone key limit reached** - remove an unused key in the Rivian app (Profile -> vehicle -> Digital Keys) and enroll again.
 - **Enable Verbose debug logging** in settings to see detailed request/error logs, then check the Homebridge logs.

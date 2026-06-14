@@ -86,3 +86,14 @@ export function toNumber(value: unknown): number | undefined {
   const n = Number(value);
   return Number.isFinite(n) ? n : undefined;
 }
+
+const SEAT_OFF_VALUES = new Set(['0', 'off', 'undefined', 'unconfigured', 'none', 'level_0', 'false']);
+
+/** Seat heat/vent reports either a level (0-4) or a string; treat anything that
+ * isn't an explicit "off" as active. */
+export function isSeatActive(value: unknown): boolean | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  return !SEAT_OFF_VALUES.has(String(value).toLowerCase());
+}

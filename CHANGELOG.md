@@ -3,6 +3,19 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.0.5
+
+- Cabin climate is now a Thermostat tile: shows current cabin temperature and
+  lets you pick Off/Heat/Cool/Auto and a target temperature (16-29 C). Maps to
+  Rivian cabin preconditioning + set-temp.
+- Add an optional front Seat Cooling switch (off by default).
+- Revert Windows to a single vent (open all) / close all switch, since Rivian's
+  API has no per-window or partial-vent control.
+- Add `scripts/pair_rivian_ble.py` to perform the one-time Bluetooth pairing of
+  the enrolled phone key. This is REQUIRED for commands to work - an enrolled
+  but unpaired key is accepted by the cloud but ignored by the vehicle.
+- Store the VAS vehicle id at enrollment (used by BLE pairing).
+
 ## 1.0.4
 
 - Windows are now a Window tile (slider): 100% opens all windows, 0% closes

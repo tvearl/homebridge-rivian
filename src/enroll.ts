@@ -69,6 +69,7 @@ export async function finalizeEnrollment(
       model: v.model,
       modelYear: v.modelYear,
       vehiclePublicKey: v.vehiclePublicKey,
+      vasVehicleId: v.vasVehicleId,
       identityId: entry.identityId,
       supportedFeatures: Object.fromEntries((v.supportedFeatures ?? []).map((f) => [f.name, f.status])),
     };

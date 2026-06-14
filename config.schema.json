@@ -33,9 +33,14 @@
         "default": true
       },
       "enableClimate": {
-        "title": "Cabin preconditioning switch",
+        "title": "Cabin climate (thermostat: current temp + preconditioning)",
         "type": "boolean",
         "default": true
+      },
+      "enableSeatCooling": {
+        "title": "Front seat cooling switch",
+        "type": "boolean",
+        "default": false
       },
       "enableWindows": {
         "title": "Open / close all windows",
@@ -76,6 +81,7 @@
         "enableLock",
         "enableBattery",
         "enableClimate",
+        "enableSeatCooling",
         "enableWindows",
         "enableFrunk",
         "enableTailgate",

@@ -12,6 +12,8 @@ export interface StoredVehicle {
   modelYear?: string;
   /** Vehicle's secp256r1 public key (hex) - the ECDH peer for command signing. */
   vehiclePublicKey: string;
+  /** VAS vehicle id, needed for the BLE pairing handshake. */
+  vasVehicleId?: string;
   /** Enrollment identity id for this phone-key/vehicle pair (sent as deviceId). */
   identityId: string;
   /** Supported feature flags reported by the vehicle (name -> status). */
