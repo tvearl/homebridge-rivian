@@ -35,8 +35,8 @@ export class WindowsAccessory implements RivianAccessory {
 
     this.service =
       accessory.getServiceById(Service.Switch, 'rivian-windows') ||
-      accessory.addService(Service.Switch, `${vehicle.name} Windows`, 'rivian-windows');
-    nameService(this.platform, this.service, `${vehicle.name} Windows`);
+      accessory.addService(Service.Switch, `${vehicle.name} Vent Windows`, 'rivian-windows');
+    nameService(this.platform, this.service, `${vehicle.name} Vent Windows`);
 
     this.service.getCharacteristic(Characteristic.On).onSet(this.setOn.bind(this));
   }

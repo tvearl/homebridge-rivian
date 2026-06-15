@@ -63,7 +63,7 @@
         "default": false
       },
       "enableWindows": {
-        "title": "Open / close all windows",
+        "title": "Vent windows (open / close all)",
         "type": "boolean",
         "default": true
       },

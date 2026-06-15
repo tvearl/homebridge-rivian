@@ -143,7 +143,7 @@ The plugin creates one accessory per vehicle, with these services (each can be t
 | Front seats | Heater/Cooler (Driver + Passenger) | One tile per seat: Off / Heat / Cool. Off by default. |
 | Second-row seat heat | Switch | Heats both second-row seats. Off by default. |
 | Steering wheel heat | Switch | Off by default. |
-| Windows | Switch | On = open/vent all windows, off = close all (no per-window or partial vent via Rivian's API). |
+| Vent Windows | Switch | On = vent/open all windows, off = close all (no per-window or partial vent via Rivian's API). |
 | Frunk | Garage Door | Open / close with Open/Closed state (R1T and R1S). |
 | Rear trunk | Garage Door (R1S liftgate) or Switch (R1T tailgate) | Auto-selected by model. R1S powered liftgate opens AND closes with state; R1T tailgate opens/drops (the API can't close it or report its position). |
 | Tonneau | Garage Door | R1T with the powered tonneau only; automatically hidden on R1S. |

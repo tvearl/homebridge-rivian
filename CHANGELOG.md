@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.3.2
+
+- Rename the windows control to "Vent Windows" to better reflect what it does
+  (vent/open all windows or close all).
+
 ## 1.3.1
 
 - Fix the cabin climate (Thermostat) flipping back on a few seconds after you
