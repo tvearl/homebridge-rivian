@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.3.3
+
+- Fix `config.schema.json` to be valid JSON Schema: the required field is now
+  declared as `"required": ["name"]` at the object level instead of
+  `"required": true` on the property (required for Homebridge verification).
+
 ## 1.3.2
 
 - Rename the windows control to "Vent Windows" to better reflect what it does

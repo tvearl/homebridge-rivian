@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Rivian",
   "name": "homebridge-rivian",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Control your Rivian (R1T / R1S) from Apple Home via Homebridge: lock/unlock, cabin preconditioning, windows, frunk, tailgate/liftgate, tonneau, seats, and battery/charge status. Unofficial, not affiliated with Rivian.",
   "license": "MIT",
   "author": "homebridge-rivian contributors",

@@ -7,12 +7,12 @@
   "footerDisplay": "Unofficial plugin - not affiliated with Rivian. Enrolling uses one of your two phone-key slots per vehicle.",
   "schema": {
     "type": "object",
+    "required": ["name"],
     "properties": {
       "name": {
         "title": "Name",
         "type": "string",
-        "default": "Rivian",
-        "required": true
+        "default": "Rivian"
       },
       "pollIntervalSeconds": {
         "title": "Polling interval (seconds)",
