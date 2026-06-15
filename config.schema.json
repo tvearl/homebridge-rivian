@@ -53,12 +53,12 @@
         "default": true
       },
       "enableTailgate": {
-        "title": "Tailgate / liftgate",
+        "title": "Rear trunk - tailgate (R1T) or powered liftgate (R1S)",
         "type": "boolean",
         "default": false
       },
       "enableTonneau": {
-        "title": "Powered tonneau cover (R1T only)",
+        "title": "Powered tonneau cover (R1T only; ignored on R1S)",
         "type": "boolean",
         "default": false
       },

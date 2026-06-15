@@ -19,6 +19,7 @@ import { ClimateAccessory } from './accessories/climate';
 import { WindowsAccessory } from './accessories/windows';
 import { FrunkAccessory } from './accessories/frunk';
 import { TailgateAccessory } from './accessories/tailgate';
+import { LiftgateAccessory } from './accessories/liftgate';
 import { TonneauAccessory } from './accessories/tonneau';
 import { SeatCoolingAccessory } from './accessories/seatCooling';
 
@@ -159,17 +160,37 @@ export class RivianHomebridgePlatform implements DynamicPlatformPlugin {
     if (this.isEnabled('enableFrunk')) {
       handlers.push(new FrunkAccessory(this, accessory, vehicle));
     }
+
+    // Rear closures differ by model: R1S has a powered liftgate (trunk) that
+    // opens AND closes; R1T has a drop tailgate and (optionally) a tonneau.
+    const isR1S = /r1s/i.test(vehicle.model || '');
     if (this.isEnabled('enableTailgate')) {
-      handlers.push(new TailgateAccessory(this, accessory, vehicle));
+      handlers.push(
+        isR1S
+          ? new LiftgateAccessory(this, accessory, vehicle)
+          : new TailgateAccessory(this, accessory, vehicle),
+      );
     }
-    if (this.isEnabled('enableTonneau')) {
+    if (!isR1S && this.isEnabled('enableTonneau')) {
       handlers.push(new TonneauAccessory(this, accessory, vehicle));
+    } else if (isR1S) {
+      this.removeService(accessory, 'rivian-tonneau');
     }
+
     if (this.config.enableSeatCooling === true) {
       handlers.push(new SeatCoolingAccessory(this, accessory, vehicle));
     }
 
     this.handlers.set(vehicle.id, handlers);
+  }
+
+  private removeService(accessory: PlatformAccessory, subtype: string): void {
+    const svc =
+      accessory.getServiceById(this.Service.GarageDoorOpener, subtype) ||
+      accessory.getServiceById(this.Service.Switch, subtype);
+    if (svc) {
+      accessory.removeService(svc);
+    }
   }
 
   private cleanupStaleAccessories(vehicles: StoredVehicle[]): void {

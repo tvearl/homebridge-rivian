@@ -18,6 +18,13 @@ export class TailgateAccessory implements RivianAccessory {
     private readonly vehicle: StoredVehicle,
   ) {
     const { Service, Characteristic } = this.platform;
+
+    // Remove a liftgate Garage Door if this vehicle was previously treated as an R1S.
+    const staleLiftgate = accessory.getServiceById(Service.GarageDoorOpener, 'rivian-liftgate');
+    if (staleLiftgate) {
+      accessory.removeService(staleLiftgate);
+    }
+
     this.service =
       accessory.getServiceById(Service.Switch, 'rivian-tailgate') ||
       accessory.addService(Service.Switch, `${vehicle.name} Tailgate`, 'rivian-tailgate');

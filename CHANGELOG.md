@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.1.0
+
+- R1S support: the rear closure is now model-aware. R1S gets a powered
+  **liftgate (trunk)** Garage Door tile that opens AND closes with state; R1T
+  keeps the drop **tailgate** switch. The **tonneau** control is automatically
+  hidden on the R1S.
+- Frunk, lock, climate, windows, seat cooling, and battery already work on both
+  R1T and R1S.
+
 ## 1.0.7
 
 - Pairing is now documented and presented as a laptop-browser step (Chrome/Edge,

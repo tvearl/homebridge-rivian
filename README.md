@@ -138,9 +138,18 @@ The plugin creates one accessory per vehicle, with these services (each can be t
 | Cabin climate | Thermostat | Current cabin temp, Off/Heat/Cool/Auto, and a target temp (16-29 C / ~61-84 F). Maps to Rivian preconditioning. |
 | Seat cooling (front) | Switch | Vents both front seats. Off by default; enable in settings. |
 | Windows | Switch | On = open/vent all windows, off = close all (no per-window or partial vent via Rivian's API). |
-| Frunk | Garage Door | Open / close with Open/Closed state. |
-| Tailgate / liftgate | Switch | On = open/drop. Close works only where supported; some vehicles do not report tailgate position. |
-| Tonneau | Garage Door | R1T powered tonneau only; Open/Closed state. |
+| Frunk | Garage Door | Open / close with Open/Closed state (R1T and R1S). |
+| Rear trunk | Garage Door (R1S liftgate) or Switch (R1T tailgate) | Auto-selected by model. R1S powered liftgate opens AND closes with state; R1T tailgate opens/drops (the API can't close it or report its position). |
+| Tonneau | Garage Door | R1T with the powered tonneau only; automatically hidden on R1S. |
+
+### Vehicle differences (auto-detected)
+
+The plugin reads your vehicle's model and adjusts:
+
+- **R1S:** rear closure is a powered **liftgate** (open + close); **no tonneau**.
+- **R1T:** rear closure is the **tailgate** (open/drop); optional **tonneau** if equipped.
+- Frunk, lock, climate, windows, seat cooling, and battery work the same on both.
+- Not yet exposed: R1S third-row seat heating and R1T gear-tunnel/side bins (can be added on request).
 
 ### Settings
 
