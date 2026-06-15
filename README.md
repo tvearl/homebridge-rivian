@@ -6,7 +6,10 @@
 
 [![npm](https://img.shields.io/npm/v/homebridge-rivian.svg)](https://www.npmjs.com/package/homebridge-rivian)
 [![npm downloads](https://img.shields.io/npm/dt/homebridge-rivian.svg)](https://www.npmjs.com/package/homebridge-rivian)
+[![Homebridge](https://img.shields.io/badge/Homebridge-491F59?logo=homebridge&logoColor=white)](https://homebridge.io)
+[![homebridge/homebridge](https://img.shields.io/badge/homebridge%2Fhomebridge-181717?logo=github&logoColor=white)](https://github.com/homebridge/homebridge)
 [![license](https://img.shields.io/github/license/tvearl/homebridge-rivian)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/Sponsor-tvearl-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/tvearl)
 [![Donate](https://img.shields.io/badge/donate-Venmo-008CFF?logo=venmo&logoColor=white)](https://venmo.com/u/thomas-whippld)
 
 Control your **Rivian** (R1T, R1S, R2) from the Apple **Home** app and Siri, through [Homebridge](https://homebridge.io).
