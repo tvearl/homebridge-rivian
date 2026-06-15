@@ -209,6 +209,13 @@ Commands are signed exactly like the Rivian app: an ECDH shared secret between y
 
 Issues and PRs welcome. Please don't include any tokens, VINs, or the contents of `rivian-auth.json` in bug reports.
 
+## Support this project
+
+This plugin is free and open source. If it's useful to you, a tip is appreciated (entirely optional):
+
+- **Venmo:** [@thomas-whippld](https://venmo.com/u/thomas-whippld)
+- **GitHub Sponsors:** [github.com/sponsors/tvearl](https://github.com/sponsors/tvearl) _(pending approval)_
+
 ## License
 
 [MIT](LICENSE)

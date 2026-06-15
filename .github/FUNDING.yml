@@ -1,0 +1,5 @@
+# Enables the "Sponsor" button on the GitHub repo.
+# github: shown once GitHub Sponsors is approved for the account.
+github: [tvearl]
+custom:
+  - "https://venmo.com/u/thomas-whippld"
