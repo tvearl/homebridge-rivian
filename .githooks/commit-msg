@@ -1,0 +1,6 @@
+#!/bin/sh
+# Strip any auto-added Cursor co-author trailer so it never lands in history.
+# Enable in a fresh clone with:  git config core.hooksPath .githooks
+if [ -n "$1" ] && [ -f "$1" ]; then
+  sed -i '/[Cc]o-authored-by:.*cursoragent@cursor\.com/d' "$1"
+fi
