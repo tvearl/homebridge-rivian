@@ -9,7 +9,7 @@ labels: bug
 A clear description of what's wrong.
 
 **Vehicle**
-- Model: <!-- R1T / R1S / R2 -->
+- Model: <!-- R1T / R1S -->
 - Generation (if known): <!-- Gen1 / Gen2 -->
 
 **Versions**

@@ -12,7 +12,7 @@
 [![Sponsor](https://img.shields.io/badge/Sponsor-tvearl-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/tvearl)
 [![Donate](https://img.shields.io/badge/donate-Venmo-008CFF?logo=venmo&logoColor=white)](https://venmo.com/u/thomas-whippld)
 
-Control your **Rivian** (R1T, R1S, R2) from the Apple **Home** app and Siri, through [Homebridge](https://homebridge.io).
+Control your **Rivian** (R1T, R1S) from the Apple **Home** app and Siri, through [Homebridge](https://homebridge.io).
 
 - Lock / unlock
 - Battery % and charging status

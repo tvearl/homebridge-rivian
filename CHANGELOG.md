@@ -103,7 +103,7 @@ to [Semantic Versioning](https://semver.org/).
 
 Initial release.
 
-- Dynamic platform plugin for Rivian vehicles (R1T / R1S / R2).
+- Dynamic platform plugin for Rivian vehicles (R1T / R1S).
 - In-browser setup wizard (no command line): sign in, MFA, vehicle selection,
   and phone-key enrollment from the plugin's settings page.
 - `rivian-homebridge-auth` CLI as a headless alternative (enroll / status /
