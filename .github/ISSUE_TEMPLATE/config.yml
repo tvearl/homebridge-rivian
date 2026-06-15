@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question / discussion
+    url: https://github.com/tvearl/homebridge-rivian/discussions
+    about: Ask questions and share setups here.
+  - name: Security report
+    url: https://github.com/tvearl/homebridge-rivian/security/advisories/new
+    about: Report a security issue privately (do not open a public issue).
