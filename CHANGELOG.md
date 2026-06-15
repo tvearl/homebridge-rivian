@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.3.1
+
+- Fix the cabin climate (Thermostat) flipping back on a few seconds after you
+  turn it Off. The vehicle's preconditioning status lags a command, and the
+  state poll was reflecting the stale value. Recent user actions are now honored
+  for a short grace period, and Off is reflected immediately.
+
 ## 1.3.0
 
 - Front seats are now **Heater/Cooler tiles** (Driver + Passenger) that switch

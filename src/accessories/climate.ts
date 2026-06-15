@@ -9,6 +9,11 @@ const MIN_TEMP_C = 16;
 const MAX_TEMP_C = 29;
 const DEFAULT_TEMP_C = 21;
 
+// After a user changes the thermostat, ignore polled state for this long. The
+// vehicle's reported preconditioning status lags a command by several seconds,
+// and reflecting that stale value would flip the tile back to its old state.
+const COMMAND_GRACE_MS = 90_000;
+
 /**
  * Cabin preconditioning as a Thermostat tile.
  *
@@ -22,6 +27,7 @@ const DEFAULT_TEMP_C = 21;
 export class ClimateAccessory implements RivianAccessory {
   private readonly service: Service;
   private targetTempC = DEFAULT_TEMP_C;
+  private lastCommandAt = 0;
 
   constructor(
     private readonly platform: RivianHomebridgePlatform,
@@ -63,7 +69,13 @@ export class ClimateAccessory implements RivianAccessory {
 
   private async setMode(value: CharacteristicValue): Promise<void> {
     const { Characteristic } = this.platform;
+    this.lastCommandAt = Date.now();
     if (value === Characteristic.TargetHeatingCoolingState.OFF) {
+      // Reflect Off immediately so a lagging state poll can't snap it back on.
+      this.service.updateCharacteristic(
+        Characteristic.CurrentHeatingCoolingState,
+        Characteristic.CurrentHeatingCoolingState.OFF,
+      );
       await this.platform.sendCommand(this.vehicle, Command.PRECONDITION_DISABLE);
       return;
     }
@@ -76,6 +88,7 @@ export class ClimateAccessory implements RivianAccessory {
   private async setTargetTemp(value: CharacteristicValue): Promise<void> {
     const temp = Math.min(MAX_TEMP_C, Math.max(MIN_TEMP_C, Number(value)));
     this.targetTempC = temp;
+    this.lastCommandAt = Date.now();
     await this.platform.sendCommand(this.vehicle, Command.SET_CABIN_TEMP, {
       HVAC_set_temp: String(temp),
     });
@@ -87,6 +100,11 @@ export class ClimateAccessory implements RivianAccessory {
     const interior = toNumber(values.cabinClimateInteriorTemperature);
     if (interior !== undefined) {
       this.service.updateCharacteristic(Characteristic.CurrentTemperature, interior);
+    }
+
+    // Don't let a lagging state poll override a recent user action.
+    if (Date.now() - this.lastCommandAt < COMMAND_GRACE_MS) {
+      return;
     }
 
     const driverSet = toNumber(values.cabinClimateDriverTemperature);
