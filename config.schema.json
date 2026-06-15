@@ -42,6 +42,16 @@
         "type": "boolean",
         "default": false
       },
+      "enableThirdRowHeat": {
+        "title": "Third-row seat heating (R1S only)",
+        "type": "boolean",
+        "default": false
+      },
+      "enableGearTunnel": {
+        "title": "Gear tunnel side bins (R1T only)",
+        "type": "boolean",
+        "default": false
+      },
       "enableWindows": {
         "title": "Open / close all windows",
         "type": "boolean",
@@ -82,10 +92,12 @@
         "enableBattery",
         "enableClimate",
         "enableSeatCooling",
+        "enableThirdRowHeat",
         "enableWindows",
         "enableFrunk",
         "enableTailgate",
-        "enableTonneau"
+        "enableTonneau",
+        "enableGearTunnel"
       ]
     },
     {

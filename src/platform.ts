@@ -22,6 +22,8 @@ import { TailgateAccessory } from './accessories/tailgate';
 import { LiftgateAccessory } from './accessories/liftgate';
 import { TonneauAccessory } from './accessories/tonneau';
 import { SeatCoolingAccessory } from './accessories/seatCooling';
+import { ThirdRowHeatAccessory } from './accessories/thirdRowHeat';
+import { GearTunnelAccessory } from './accessories/gearTunnel';
 
 export interface RivianAccessory {
   update(values: VehicleStateValues): void;
@@ -38,6 +40,8 @@ export interface RivianPlatformConfig extends PlatformConfig {
   enableTailgate?: boolean;
   enableTonneau?: boolean;
   enableSeatCooling?: boolean;
+  enableThirdRowHeat?: boolean;
+  enableGearTunnel?: boolean;
   debug?: boolean;
 }
 
@@ -179,6 +183,21 @@ export class RivianHomebridgePlatform implements DynamicPlatformPlugin {
 
     if (this.config.enableSeatCooling === true) {
       handlers.push(new SeatCoolingAccessory(this, accessory, vehicle));
+    }
+
+    // Third-row seat heating: R1S only.
+    if (isR1S && this.config.enableThirdRowHeat === true) {
+      handlers.push(new ThirdRowHeatAccessory(this, accessory, vehicle));
+    } else if (!isR1S) {
+      this.removeService(accessory, 'rivian-thirdrow-heat');
+    }
+
+    // Gear tunnel side bins: R1T only.
+    if (!isR1S && this.config.enableGearTunnel === true) {
+      handlers.push(new GearTunnelAccessory(this, accessory, vehicle));
+    } else if (isR1S) {
+      this.removeService(accessory, 'rivian-gear-left');
+      this.removeService(accessory, 'rivian-gear-right');
     }
 
     this.handlers.set(vehicle.id, handlers);

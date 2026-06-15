@@ -149,7 +149,8 @@ The plugin reads your vehicle's model and adjusts:
 - **R1S:** rear closure is a powered **liftgate** (open + close); **no tonneau**.
 - **R1T:** rear closure is the **tailgate** (open/drop); optional **tonneau** if equipped.
 - Frunk, lock, climate, windows, seat cooling, and battery work the same on both.
-- Not yet exposed: R1S third-row seat heating and R1T gear-tunnel/side bins (can be added on request).
+- **R1S only (optional, off by default):** third-row seat heating switch.
+- **R1T only (optional, off by default):** gear tunnel side-bin release (two switches, left/right). The API can only open a bin - you close it by hand - so the switch reflects the bin's actual state.
 
 ### Settings
 

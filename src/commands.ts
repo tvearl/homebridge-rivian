@@ -8,6 +8,10 @@ export const Command = {
   SET_CABIN_TEMP: 'CABIN_PRECONDITIONING_SET_TEMP',
   SEAT_FRONT_LEFT_VENT: 'CABIN_HVAC_LEFT_SEAT_VENT',
   SEAT_FRONT_RIGHT_VENT: 'CABIN_HVAC_RIGHT_SEAT_VENT',
+  SEAT_THIRD_ROW_LEFT_HEAT: 'CABIN_HVAC_THIRD_ROW_LEFT_SEAT_HEAT',
+  SEAT_THIRD_ROW_RIGHT_HEAT: 'CABIN_HVAC_THIRD_ROW_RIGHT_SEAT_HEAT',
+  RELEASE_LEFT_SIDE_BIN: 'RELEASE_LEFT_SIDE_BIN',
+  RELEASE_RIGHT_SIDE_BIN: 'RELEASE_RIGHT_SIDE_BIN',
   OPEN_WINDOWS: 'OPEN_ALL_WINDOWS',
   CLOSE_WINDOWS: 'CLOSE_ALL_WINDOWS',
   OPEN_FRUNK: 'OPEN_FRUNK',
@@ -43,6 +47,8 @@ export const STATE_PROPERTIES: string[] = [
   'cabinClimateDriverTemperature',
   'seatFrontLeftVent',
   'seatFrontRightVent',
+  'seatThirdRowLeftHeat',
+  'seatThirdRowRightHeat',
   // windows
   'windowFrontLeftClosed',
   'windowFrontRightClosed',
@@ -50,6 +56,9 @@ export const STATE_PROPERTIES: string[] = [
   'windowRearRightClosed',
   // frunk
   'closureFrunkClosed',
+  // gear tunnel / side bins (R1T)
+  'closureSideBinLeftClosed',
+  'closureSideBinRightClosed',
   // tailgate / liftgate
   'closureTailgateClosed',
   'closureLiftgateClosed',

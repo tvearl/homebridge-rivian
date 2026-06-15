@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.2.0
+
+- Add optional **third-row seat heating** switch for the R1S.
+- Add optional **gear tunnel** side-bin controls for the R1T (left/right release
+  switches; open-only, since the API can't close the bins - they reflect actual
+  state). Both are off by default and shown only for the matching model.
+
 ## 1.1.0
 
 - R1S support: the rear closure is now model-aware. R1S gets a powered
