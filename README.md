@@ -136,7 +136,9 @@ The plugin creates one accessory per vehicle, with these services (each can be t
 | Battery % | Humidity sensor + Battery | Shows state of charge as a percentage. |
 | Charging | Contact sensor | "Open" while the vehicle is charging. |
 | Cabin climate | Thermostat | Current cabin temp, Off/Heat/Cool/Auto, and a target temp (16-29 C / ~61-84 F). Maps to Rivian preconditioning. |
-| Seat cooling (front) | Switch | Vents both front seats. Off by default; enable in settings. |
+| Front seats | Heater/Cooler (Driver + Passenger) | One tile per seat: Off / Heat / Cool. Off by default. |
+| Second-row seat heat | Switch | Heats both second-row seats. Off by default. |
+| Steering wheel heat | Switch | Off by default. |
 | Windows | Switch | On = open/vent all windows, off = close all (no per-window or partial vent via Rivian's API). |
 | Frunk | Garage Door | Open / close with Open/Closed state (R1T and R1S). |
 | Rear trunk | Garage Door (R1S liftgate) or Switch (R1T tailgate) | Auto-selected by model. R1S powered liftgate opens AND closes with state; R1T tailgate opens/drops (the API can't close it or report its position). |
@@ -148,7 +150,7 @@ The plugin reads your vehicle's model and adjusts:
 
 - **R1S:** rear closure is a powered **liftgate** (open + close); **no tonneau**.
 - **R1T:** rear closure is the **tailgate** (open/drop); optional **tonneau** if equipped.
-- Frunk, lock, climate, windows, seat cooling, and battery work the same on both.
+- Frunk, lock, climate, windows, battery, and (optional) front-seat heat/cool, second-row seat heat, and heated steering wheel work the same on both.
 - **R1S only (optional, off by default):** third-row seat heating switch.
 - **R1T only (optional, off by default):** gear tunnel side-bin release (two switches, left/right). The API can only open a bin - you close it by hand - so the switch reflects the bin's actual state.
 
@@ -165,8 +167,8 @@ The plugin reads your vehicle's model and adjusts:
 These are limits of Rivian's API, not bugs:
 
 - **No partial window "vent."** Rivian's cloud API only supports opening or closing *all* windows together. There is no partial-vent command, so the Windows switch fully opens/closes.
-- **No individual seat heating/cooling.** Those are not exposed as standalone cloud commands, so they are not included.
-- **Preconditioning is on/off**, not a full live thermostat. The switch enables/disables cabin preconditioning; it doesn't set a target temperature in HomeKit.
+- **No suspension / ride-height control.** Rivian's unofficial API has no command for ride height (kneel/low/standard/high), so it can't be exposed - even though the official app can do it.
+- **Cabin preconditioning** is exposed as a Thermostat (current temp + target temp + on/off); Rivian decides whether to heat or cool to reach the target. Seat heat/cool and steering heat are simple on/off (level is fixed when on).
 - **The vehicle may be asleep.** Commands first try directly, then wake the vehicle and retry. The first command after a long idle period can take a few extra seconds.
 - **Some controls depend on your vehicle/options** (e.g. powered tonneau is R1T-only; liftgate close is R1S). Unsupported commands simply do nothing on the car.
 

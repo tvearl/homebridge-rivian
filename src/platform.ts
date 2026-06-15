@@ -21,7 +21,9 @@ import { FrunkAccessory } from './accessories/frunk';
 import { TailgateAccessory } from './accessories/tailgate';
 import { LiftgateAccessory } from './accessories/liftgate';
 import { TonneauAccessory } from './accessories/tonneau';
-import { SeatCoolingAccessory } from './accessories/seatCooling';
+import { FrontSeatsAccessory } from './accessories/frontSeats';
+import { RearSeatHeatAccessory } from './accessories/rearSeatHeat';
+import { SteeringHeatAccessory } from './accessories/steeringHeat';
 import { ThirdRowHeatAccessory } from './accessories/thirdRowHeat';
 import { GearTunnelAccessory } from './accessories/gearTunnel';
 
@@ -39,8 +41,12 @@ export interface RivianPlatformConfig extends PlatformConfig {
   enableFrunk?: boolean;
   enableTailgate?: boolean;
   enableTonneau?: boolean;
+  enableFrontSeats?: boolean;
+  /** @deprecated alias for enableFrontSeats */
   enableSeatCooling?: boolean;
+  enableRearSeatHeat?: boolean;
   enableThirdRowHeat?: boolean;
+  enableSteeringHeat?: boolean;
   enableGearTunnel?: boolean;
   debug?: boolean;
 }
@@ -181,8 +187,15 @@ export class RivianHomebridgePlatform implements DynamicPlatformPlugin {
       this.removeService(accessory, 'rivian-tonneau');
     }
 
-    if (this.config.enableSeatCooling === true) {
-      handlers.push(new SeatCoolingAccessory(this, accessory, vehicle));
+    // Front seats: heat/cool tiles (both models). enableSeatCooling kept as alias.
+    if (this.config.enableFrontSeats === true || this.config.enableSeatCooling === true) {
+      handlers.push(new FrontSeatsAccessory(this, accessory, vehicle));
+    }
+    if (this.config.enableRearSeatHeat === true) {
+      handlers.push(new RearSeatHeatAccessory(this, accessory, vehicle));
+    }
+    if (this.config.enableSteeringHeat === true) {
+      handlers.push(new SteeringHeatAccessory(this, accessory, vehicle));
     }
 
     // Third-row seat heating: R1S only.

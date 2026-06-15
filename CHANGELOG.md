@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.3.0
+
+- Front seats are now **Heater/Cooler tiles** (Driver + Passenger) that switch
+  between Off / Heat / Cool, replacing the old front seat-cooling switch
+  (`enableSeatCooling` still works as an alias for `enableFrontSeats`).
+- Add optional **second-row seat heating** and **heated steering wheel** switches
+  (both models).
+- Note: Rivian's unofficial API exposes no suspension/ride-height command, so
+  that can't be controlled.
+
 ## 1.2.0
 
 - Add optional **third-row seat heating** switch for the R1S.

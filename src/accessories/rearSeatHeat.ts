@@ -5,16 +5,11 @@ import { Command, VehicleStateValues } from '../commands';
 import { isSeatActive } from '../state';
 import { nameService } from './util';
 
-// Seat vent/heat level: 0 = off, 1-4 = increasing. Use a mid level for "on".
 const ON_LEVEL = 3;
 const OFF_LEVEL = 0;
 
-/**
- * Front-seat cooling (ventilation) as a Switch. Turning it on vents both front
- * seats; useful to fire alongside cabin preconditioning. Heating uses different
- * commands and is intentionally not bundled here.
- */
-export class SeatCoolingAccessory implements RivianAccessory {
+/** Second-row seat heating as a Switch (both rear seats together). */
+export class RearSeatHeatAccessory implements RivianAccessory {
   private readonly service: Service;
 
   constructor(
@@ -24,21 +19,21 @@ export class SeatCoolingAccessory implements RivianAccessory {
   ) {
     const { Service, Characteristic } = this.platform;
     this.service =
-      accessory.getServiceById(Service.Switch, 'rivian-seat-cooling') ||
-      accessory.addService(Service.Switch, `${vehicle.name} Seat Cooling`, 'rivian-seat-cooling');
-    nameService(this.platform, this.service, `${vehicle.name} Seat Cooling`);
+      accessory.getServiceById(Service.Switch, 'rivian-rear-heat') ||
+      accessory.addService(Service.Switch, `${vehicle.name} Rear Seat Heat`, 'rivian-rear-heat');
+    nameService(this.platform, this.service, `${vehicle.name} Rear Seat Heat`);
 
     this.service.getCharacteristic(Characteristic.On).onSet(this.setOn.bind(this));
   }
 
   private async setOn(value: CharacteristicValue): Promise<void> {
     const level = value ? ON_LEVEL : OFF_LEVEL;
-    await this.platform.sendCommand(this.vehicle, Command.SEAT_FRONT_LEFT_VENT, { level });
-    await this.platform.sendCommand(this.vehicle, Command.SEAT_FRONT_RIGHT_VENT, { level });
+    await this.platform.sendCommand(this.vehicle, Command.SEAT_REAR_LEFT_HEAT, { level });
+    await this.platform.sendCommand(this.vehicle, Command.SEAT_REAR_RIGHT_HEAT, { level });
   }
 
   update(values: VehicleStateValues): void {
-    const states = [values.seatFrontLeftVent, values.seatFrontRightVent]
+    const states = [values.seatRearLeftHeat, values.seatRearRightHeat]
       .map((v) => isSeatActive(v))
       .filter((s) => s !== undefined);
     if (!states.length) {
