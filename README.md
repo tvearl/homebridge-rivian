@@ -140,7 +140,7 @@ The plugin creates one accessory per vehicle, with these services (each can be t
 | Battery % | Humidity sensor + Battery | Shows state of charge as a percentage. |
 | Charging | Contact sensor | "Open" while the vehicle is charging. |
 | Cabin climate | Thermostat | Current cabin temp, Off/Heat/Cool/Auto, and a target temp (16-29 C / ~61-84 F). Maps to Rivian preconditioning. |
-| Front seats | Heater/Cooler (Driver + Passenger) | One tile per seat: Off / Heat / Cool with a 3-speed (low/med/high) fan slider. Off by default. |
+| Front seats | Fan (Driver + Passenger) | 3-speed seat ventilation/cooling per seat (low/med/high). Off by default. |
 | Second-row seat heat | Switch | Heats both second-row seats. Off by default. |
 | Steering wheel heat | Switch | Off by default. |
 | Vent Windows | Switch | On = vent/open all windows, off = close all (no per-window or partial vent via Rivian's API). |

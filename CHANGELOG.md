@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.4.1
+
+- Front seats are now a simple 3-speed **Fan** per seat (ventilation/cooling:
+  low/medium/high) instead of a Heater/Cooler tile. The Heater/Cooler tile could
+  render blank in Apple Home (Heat/Cool without threshold temps), and showed an
+  unnecessary temperature. Heat mode is omitted for now.
+
 ## 1.4.0
 
 - Front seats now have a 3-speed fan slider (low / medium / high) in addition to
