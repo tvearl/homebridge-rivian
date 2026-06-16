@@ -220,6 +220,10 @@
         });
       }
 
+      // Show the standard config form (control on/off toggles, polling interval,
+      // etc.) below this wizard. Without this, a custom UI hides the schema form.
+      homebridge.showSchemaForm();
+
       $('reenrollBtn').addEventListener('click', () => show('step-login'));
 
       $('disconnectBtn').addEventListener('click', async () => {

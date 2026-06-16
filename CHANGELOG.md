@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.3.4
+
+- Fix: the plugin settings page now shows the standard config form (the
+  enable/disable toggles for each control - gear tunnel, seats, tonneau, etc. -
+  plus polling interval) below the sign-in wizard. The custom UI was hiding the
+  schema form; it now calls `showSchemaForm()`.
+
 ## 1.3.3
 
 - Fix `config.schema.json` to be valid JSON Schema: the required field is now
