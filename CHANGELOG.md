@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## 1.4.0
+
+- Front seats now have a 3-speed fan slider (low / medium / high) in addition to
+  the Heat/Cool selector, mapping to Rivian's seat heat/vent levels. A grace
+  window keeps a lagging state poll from overriding a just-made change.
+
 ## 1.3.4
 
 - Fix: the plugin settings page now shows the standard config form (the
